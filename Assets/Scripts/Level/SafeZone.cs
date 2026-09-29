@@ -13,9 +13,21 @@ public class SafeZone : MonoBehaviour
 
     private static SafeZone current;
 
-    public static Vector3 CurrentSpawnPosition => current != null ? current.spawnPoint.position : Vector3.zero;
+    public static Vector3 CurrentSpawnPosition
+    {
+        get
+        {
+            if (current == null)
+            {
+                // Sessizce (0,0,0)'da doğmak yerine sorunu görünür yap
+                Debug.LogError("[KosKos] Aktif güvenli alan yok! Sahnede 'isStartZone' işaretli bir SafeZone olmalı.");
+                return Vector3.zero;
+            }
+            return current.spawnPoint.position;
+        }
+    }
 
-    // Domain reload kapalı olduğu için statik alan Play oturumları arasında elle sıfırlanmalı
+    // Domain reload kapatılırsa statik alan Play oturumları arasında kalır; bu yüzden elle sıfırlanır
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
     {

@@ -16,6 +16,9 @@ public class PlayerMotor : MonoBehaviour
     [Tooltip("Havada hızın düşebileceği en düşük değer (birim/sn).")]
     [SerializeField] private float minAirSpeed = 5f;
 
+    [Tooltip("Boost ile koşu hızının üstüne çıkan hızın saniyede ne kadar azaldığı (birim/sn²).")]
+    [SerializeField] private float boostDecayRate = 8f;
+
     [Header("Yerçekimi")]
     [Tooltip("Karaktere uygulanan özel yerçekimi (birim/sn²). Yüksek değer = daha keskin zıplama.")]
     [SerializeField] private float gravity = 40f;
@@ -41,6 +44,7 @@ public class PlayerMotor : MonoBehaviour
     public bool IsGrounded { get; private set; }
     public float CurrentSpeed => currentSpeed;
     public bool IsControlLocked => controlOwner != null;
+    public bool IsBoosted => currentSpeed > runSpeed + BoostEpsilon;
 
     private Rigidbody rb;
     private CapsuleCollider capsule;
@@ -52,6 +56,8 @@ public class PlayerMotor : MonoBehaviour
     private const float CastSkin = 0.05f;
     // Yukarı doğru bu hızdan hızlı gidiyorsak zeminde sayılmayız (zıplamanın ilk karesi için)
     private const float GroundedMaxUpVelocity = 0.01f;
+    // Hız koşu hızını bu kadar aşarsa "boost'lu" sayılır (kayan nokta hatasına karşı pay)
+    private const float BoostEpsilon = 0.01f;
 
     private void Awake()
     {
@@ -117,7 +123,12 @@ public class PlayerMotor : MonoBehaviour
 
     private void UpdateHorizontalSpeed(float dt)
     {
-        if (IsGrounded)
+        if (currentSpeed > runSpeed)
+        {
+            // Boost fazlası (yerde veya havada) yavaşça koşu hızına iner
+            currentSpeed = Mathf.MoveTowards(currentSpeed, runSpeed, boostDecayRate * dt);
+        }
+        else if (IsGrounded)
         {
             // Yerde hız sabit
             currentSpeed = runSpeed;
@@ -136,6 +147,9 @@ public class PlayerMotor : MonoBehaviour
     {
         if (frozen) return;
 
+        // Boost'luyken kırılabilire önden çarpmak onu kırar (D.3), ölüm olmaz
+        Breakable breakable = IsBoosted ? collision.collider.GetComponentInParent<Breakable>() : null;
+
         float feetY = capsule.bounds.min.y;
         int count = collision.contactCount;
         for (int i = 0; i < count; i++)
@@ -144,6 +158,12 @@ public class PlayerMotor : MonoBehaviour
             // Yüzey koşu yönüne karşı bakıyorsa ve ayak seviyesinin üstündeyse: önden çarpma
             if (contact.normal.x < -frontalHitThreshold && contact.point.y > feetY + stepTolerance)
             {
+                if (breakable != null)
+                {
+                    breakable.Break();
+                    return;
+                }
+
                 HitObstacle?.Invoke();
                 return;
             }
@@ -156,6 +176,12 @@ public class PlayerMotor : MonoBehaviour
         Vector3 v = rb.linearVelocity;
         v.y = Mathf.Sqrt(2f * gravity * height);
         rb.linearVelocity = v;
+    }
+
+    // Boost gibi anlık hız artışları; fazlası boostDecayRate ile söner
+    public void AddSpeed(float amount)
+    {
+        currentSpeed += amount;
     }
 
     // Özel yetenekler (atılma, boost şarjı) için tekil kontrol kilidi
@@ -171,10 +197,28 @@ public class PlayerMotor : MonoBehaviour
         if (controlOwner == owner) controlOwner = null;
     }
 
+    public bool HasControl(object owner) => controlOwner == owner;
+
     // Sadece kontrol kilidinin sahibi çağırmalı
     public void SetVelocity(Vector3 velocity)
     {
         rb.linearVelocity = velocity;
+    }
+
+    // Verilen layer'larla fiziksel çarpışmayı kapatır (sıyrılganlık). 0 = hepsi açık.
+    public void SetExcludedLayers(LayerMask layers)
+    {
+        rb.excludeLayers = layers;
+    }
+
+    // Kapsül şu an verilen layer'lardaki bir collider'ın içinde mi?
+    public bool OverlapsAny(LayerMask layers)
+    {
+        Vector3 center = rb.position + capsule.center;
+        float halfSegment = capsule.height * 0.5f - capsule.radius;
+        Vector3 top = center + Vector3.up * halfSegment;
+        Vector3 bottom = center + Vector3.down * halfSegment;
+        return Physics.CheckCapsule(bottom, top, capsule.radius, layers, QueryTriggerInteraction.Ignore);
     }
 
     // Ölüm sırasında karakteri dondurur / çözer.
@@ -193,6 +237,7 @@ public class PlayerMotor : MonoBehaviour
         transform.position = position;
         currentSpeed = runSpeed;
         controlOwner = null;
+        rb.excludeLayers = 0;
         IsGrounded = false;
     }
 }

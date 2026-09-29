@@ -13,17 +13,30 @@ public class PlayerDeath : MonoBehaviour
     public event Action Died;
     public event Action Respawned;
 
+    // Seviye nesneleri (ör. kırılabilirler) oyuncuya referans tutmadan yeniden doğuşu dinler
+    public static event Action AnyPlayerRespawned;
+
     public bool IsDead { get; private set; }
 
     private PlayerMotor motor;
     private Renderer[] renderers;
+    // Ölüm anında hangi görsellerin açık olduğu; yeniden doğuşta sadece onlar geri açılır
+    private bool[] rendererStates;
     // Geçici sayaç; asıl ölüm sayacı (A.4) bölüm akışı ile gelecek
     private int deathCount;
+
+    // Domain reload kapatılırsa statik event Play oturumları arasında kalır; bu yüzden elle temizlenir
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        AnyPlayerRespawned = null;
+    }
 
     private void Awake()
     {
         motor = GetComponent<PlayerMotor>();
         renderers = GetComponentsInChildren<Renderer>();
+        rendererStates = new bool[renderers.Length];
     }
 
     private void OnEnable()
@@ -44,9 +57,10 @@ public class PlayerDeath : MonoBehaviour
         deathCount++;
         Debug.Log($"[KosKos] Ölüm #{deathCount}");
 
+        // Önce yetenekler kendini kapatsın (ör. kılıç görseli), sonra görsel durumu kaydedilsin
         Died?.Invoke();
         motor.SetFrozen(true);
-        SetVisible(false);
+        HideRenderers();
         StartCoroutine(RespawnRoutine());
     }
 
@@ -56,17 +70,27 @@ public class PlayerDeath : MonoBehaviour
 
         motor.ResetState(SafeZone.CurrentSpawnPosition);
         motor.SetFrozen(false);
-        SetVisible(true);
+        RestoreRenderers();
         IsDead = false;
 
         Respawned?.Invoke();
+        AnyPlayerRespawned?.Invoke();
     }
 
-    private void SetVisible(bool visible)
+    private void HideRenderers()
     {
-        foreach (Renderer r in renderers)
+        for (int i = 0; i < renderers.Length; i++)
         {
-            r.enabled = visible;
+            rendererStates[i] = renderers[i].enabled;
+            renderers[i].enabled = false;
+        }
+    }
+
+    private void RestoreRenderers()
+    {
+        for (int i = 0; i < renderers.Length; i++)
+        {
+            renderers[i].enabled = rendererStates[i];
         }
     }
 }

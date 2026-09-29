@@ -2,6 +2,7 @@ using UnityEngine;
 
 // Atılma (B.3): karakter kısa süre yerçekimsiz, düz bir çizgide ileri fırlar.
 // Havada tek kullanımlık; yere değince veya kılıçla bir şeye vurunca yenilenir.
+// Sıyrılganlık (B.3.1) açıksa atılma boyunca Phaseable layer'ındaki nesnelerin içinden geçer.
 // Motor'dan önce çalışır: atılmanın bittiği adımda kilit bırakılır ve motor aynı adımda normal koşuya döner
 [DefaultExecutionOrder(-10)]
 [RequireComponent(typeof(PlayerMotor), typeof(PlayerInputReader), typeof(PlayerDeath))]
@@ -16,6 +17,13 @@ public class DashAbility : MonoBehaviour
     [Tooltip("Yerde iki atılma arasındaki bekleme süresi (sn).")]
     [SerializeField] private float groundDashCooldown = 0.3f;
 
+    [Header("Sıyrılganlık")]
+    [Tooltip("Sıyrılganlık açıldı mı? (Oyunda ilerledikçe açılır.) Açıksa atılırken ince duvarların ve kırılabilirlerin içinden geçer.")]
+    [SerializeField] private bool phaseUnlocked;
+
+    [Tooltip("Sıyrılganlık ile içinden geçilebilen layer'lar (Phaseable). Kalın duvarlar bu layer'da OLMAMALI.")]
+    [SerializeField] private LayerMask phaseableLayers;
+
     public bool IsDashing { get; private set; }
 
     private PlayerMotor motor;
@@ -23,6 +31,7 @@ public class DashAbility : MonoBehaviour
     private PlayerDeath death;
 
     private bool airDashAvailable = true;
+    private bool isPhasing;
     private float dashEndTime;
     private float lastGroundDashTime = float.NegativeInfinity;
 
@@ -71,6 +80,10 @@ public class DashAbility : MonoBehaviour
         IsDashing = true;
         // Fizik zamanına göre ölçülür; FixedUpdate'teki kontrol ile aynı saat kullanılsın diye
         dashEndTime = Time.fixedTime + dashDuration;
+
+        isPhasing = phaseUnlocked;
+        if (isPhasing) motor.SetExcludedLayers(phaseableLayers);
+
         motor.SetVelocity(new Vector3(dashSpeed, 0f, 0f));
     }
 
@@ -78,7 +91,8 @@ public class DashAbility : MonoBehaviour
     {
         if (!IsDashing) return;
 
-        if (Time.fixedTime >= dashEndTime)
+        // Süre bittiğinde hâlâ bir duvarın içindeysek çıkana kadar atılmaya devam (sıkışmayı önler)
+        if (Time.fixedTime >= dashEndTime && !(isPhasing && motor.OverlapsAny(phaseableLayers)))
         {
             EndDash();
             return;
@@ -91,10 +105,15 @@ public class DashAbility : MonoBehaviour
     private void EndDash()
     {
         IsDashing = false;
+        if (isPhasing)
+        {
+            motor.SetExcludedLayers(0);
+            isPhasing = false;
+        }
         motor.ReleaseControl(this);
     }
 
-    // Kılıç havada bir şeye vurduğunda da çağrılır (faz 2)
+    // Kılıç havada bir şeye vurduğunda da çağrılır
     public void RefreshAirDash()
     {
         airDashAvailable = true;
