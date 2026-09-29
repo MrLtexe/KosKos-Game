@@ -1905,6 +1905,22 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 467729156314950423, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
+      propertyPath: parryUnlocked
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 467729156314950423, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
+      propertyPath: hitLayers.m_Bits
+      value: 3639
+      objectReference: {fileID: 0}
+    - target: {fileID: 5435524720068165554, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
+      propertyPath: phaseUnlocked
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6039278076384722662, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
+      propertyPath: doubleJumpUnlocked
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8550790304787940975, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
       propertyPath: m_Name
       value: Player

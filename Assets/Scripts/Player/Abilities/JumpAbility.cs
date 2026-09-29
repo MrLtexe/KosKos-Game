@@ -3,6 +3,7 @@ using UnityEngine;
 // Zıplama (B.2) ve çift zıplama (B.2.1).
 // Coyote time: kenardan düştükten hemen sonra hâlâ zıplanabilir.
 // Jump buffer: yere değmeden hemen önce basılan zıplama, yere değince gerçekleşir.
+// Fırlatma alanı ek hava zıplaması verir; zipline'dan çıkış hava zıplamalarını yere inene kadar kapatır.
 [RequireComponent(typeof(PlayerMotor), typeof(PlayerInputReader), typeof(PlayerDeath))]
 public class JumpAbility : MonoBehaviour
 {
@@ -23,8 +24,10 @@ public class JumpAbility : MonoBehaviour
     [Tooltip("Çift zıplama açıldı mı? (Oyunda ilerledikçe açılır.)")]
     [SerializeField] private bool doubleJumpUnlocked;
 
-    [Tooltip("Havadaki ikinci zıplamanın yüksekliği (birim).")]
+    [Tooltip("Havadaki ikinci zıplamanın (ve fırlatma alanı ek zıplamasının) yüksekliği (birim).")]
     [SerializeField] private float doubleJumpHeight = 2.5f;
+
+    public float JumpHeight => jumpHeight;
 
     private PlayerMotor motor;
     private PlayerInputReader input;
@@ -35,6 +38,10 @@ public class JumpAbility : MonoBehaviour
     private float bufferedUntil = float.NegativeInfinity;
     private bool jumpedSinceGrounded;
     private bool airJumpUsed;
+    // Fırlatma alanından gelen, çift zıplama kilitli olsa bile kullanılabilen ek hava zıplaması
+    private bool bonusAirJump;
+    // Zipline'dan çıkınca yere inene kadar hiçbir hava zıplaması yok
+    private bool airJumpsBlocked;
 
     private void Awake()
     {
@@ -81,7 +88,17 @@ public class JumpAbility : MonoBehaviour
             return true;
         }
 
-        if (doubleJumpUnlocked && !motor.IsGrounded && !airJumpUsed)
+        if (motor.IsGrounded || airJumpsBlocked) return false;
+
+        // Önce fırlatma alanının ek zıplaması, sonra çift zıplama
+        if (bonusAirJump)
+        {
+            motor.Jump(doubleJumpHeight);
+            bonusAirJump = false;
+            return true;
+        }
+
+        if (doubleJumpUnlocked && !airJumpUsed)
         {
             motor.Jump(doubleJumpHeight);
             airJumpUsed = true;
@@ -100,10 +117,36 @@ public class JumpAbility : MonoBehaviour
         return !jumpedSinceGrounded && Time.time <= leftGroundTime + coyoteTime;
     }
 
+    // Fırlatma alanı: bir ek hava zıplaması ver. Fırlatma "zıplamış" sayılır (coyote yer zıplaması fırlatmayı ezmesin).
+    public void GrantBonusAirJump()
+    {
+        bonusAirJump = true;
+        airJumpsBlocked = false;
+        jumpedSinceGrounded = true;
+        // Aynı karede hâlâ "yerde" görünürken basılan Space fırlatmayı yer zıplamasıyla ezmesin (bekleme süresi devreye girer)
+        lastGroundJumpTime = Time.time;
+    }
+
+    // Sapan fırlatması / zipline'dan zıplama gibi Space'i kendisi kullanan eylemler, saklanan basışı iptal eder
+    public void ClearBufferedJump()
+    {
+        bufferedUntil = float.NegativeInfinity;
+    }
+
+    // Zipline'dan çıkış: yere inene kadar hiçbir hava zıplaması yok
+    public void BlockAirJumpsUntilLanded()
+    {
+        airJumpsBlocked = true;
+        bonusAirJump = false;
+        jumpedSinceGrounded = true;
+    }
+
     private void OnLanded()
     {
         jumpedSinceGrounded = false;
         airJumpUsed = false;
+        bonusAirJump = false;
+        airJumpsBlocked = false;
 
         if (Time.time <= bufferedUntil)
         {
@@ -124,5 +167,7 @@ public class JumpAbility : MonoBehaviour
         bufferedUntil = float.NegativeInfinity;
         jumpedSinceGrounded = false;
         airJumpUsed = false;
+        bonusAirJump = false;
+        airJumpsBlocked = false;
     }
 }

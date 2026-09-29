@@ -47,6 +47,8 @@ public class PlayerMotor : MonoBehaviour
     public bool IsBoosted => currentSpeed > runSpeed + BoostEpsilon;
     // Düşmanların hedef önü nişan alması için
     public Vector3 Velocity => rb.linearVelocity;
+    // Fizik konumu (interpolasyonsuz); zipline gibi konum takibi yapan yetenekler için
+    public Vector3 Position => rb.position;
 
     private Rigidbody rb;
     private CapsuleCollider capsule;
@@ -184,6 +186,14 @@ public class PlayerMotor : MonoBehaviour
     public void AddSpeed(float amount)
     {
         currentSpeed += amount;
+    }
+
+    // İstenen yöne fırlatma (sapan, zipline sonu). Yatay hız motorun koşu hızına yazılır,
+    // böylece fırlatmadan sonra normal hava kuralları (yavaşlama, boost sönmesi) devam eder.
+    public void Launch(Vector3 velocity)
+    {
+        currentSpeed = Mathf.Max(0f, velocity.x);
+        rb.linearVelocity = new Vector3(currentSpeed, velocity.y, 0f);
     }
 
     // Özel yetenekler (atılma, boost şarjı) için tekil kontrol kilidi

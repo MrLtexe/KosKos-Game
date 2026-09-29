@@ -44,6 +44,8 @@ public class DashAbility : MonoBehaviour
     private float dashEndTime;
     private float dodgeGraceEndTime = float.NegativeInfinity;
     private float lastGroundDashTime = float.NegativeInfinity;
+    // Zipline'dan düşünce yere inene kadar atılma yok
+    private bool blockedUntilLanded;
 
     private void Awake()
     {
@@ -55,7 +57,7 @@ public class DashAbility : MonoBehaviour
     private void OnEnable()
     {
         input.DashPressed += OnDashPressed;
-        motor.Landed += RefreshAirDash;
+        motor.Landed += OnLanded;
         death.Died += OnDied;
         death.Respawned += OnRespawned;
     }
@@ -63,14 +65,14 @@ public class DashAbility : MonoBehaviour
     private void OnDisable()
     {
         input.DashPressed -= OnDashPressed;
-        motor.Landed -= RefreshAirDash;
+        motor.Landed -= OnLanded;
         death.Died -= OnDied;
         death.Respawned -= OnRespawned;
     }
 
     private void OnDashPressed()
     {
-        if (IsDashing || death.IsDead) return;
+        if (IsDashing || death.IsDead || blockedUntilLanded) return;
 
         bool grounded = motor.IsGrounded;
         if (grounded)
@@ -132,6 +134,18 @@ public class DashAbility : MonoBehaviour
         airDashAvailable = true;
     }
 
+    // Zipline'dan düşüş: yere inene kadar atılma kapalı (kılıç isabeti de açmaz)
+    public void BlockUntilLanded()
+    {
+        blockedUntilLanded = true;
+    }
+
+    private void OnLanded()
+    {
+        RefreshAirDash();
+        blockedUntilLanded = false;
+    }
+
     private void OnDied()
     {
         // Atılma sırasında ölürsek kilit takılı kalmasın
@@ -145,5 +159,6 @@ public class DashAbility : MonoBehaviour
         airDashAvailable = true;
         lastGroundDashTime = float.NegativeInfinity;
         dodgeGraceEndTime = float.NegativeInfinity;
+        blockedUntilLanded = false;
     }
 }

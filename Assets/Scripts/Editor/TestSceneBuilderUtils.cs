@@ -12,6 +12,15 @@ public static class TestSceneBuilderUtils
     public const float LevelDepth = 3f;
 
     private static readonly Color SwordFlashColor = new Color(1f, 0.95f, 0.3f);
+    private static readonly Color BalanceBarColor = new Color(0.15f, 0.15f, 0.15f);
+
+    // Güncel Player prefab'ında olması gereken bileşenler; eksikse prefab eski demektir
+    private static readonly System.Type[] RequiredPlayerComponents =
+    {
+        typeof(PlayerInputReader), typeof(PlayerMotor), typeof(PlayerDeath), typeof(JumpAbility),
+        typeof(DashAbility), typeof(SwordAttack), typeof(BoostChargeAbility), typeof(ZiplineRider),
+        typeof(SlingAbility), typeof(ChargeTintPlaceholder), typeof(BalanceBarPlaceholder), typeof(SlingArrowPlaceholder)
+    };
 
     public struct Layers
     {
@@ -62,21 +71,47 @@ public static class TestSceneBuilderUtils
     public static GameObject SpawnPlayer(Layers layers, InputActionAsset actions, Vector3 position)
     {
         GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PlayerPrefabPath);
-        if (prefab == null)
+        if (prefab == null || ShouldRebuildOutdated(prefab))
         {
+            // Aynı yola kaydetmek prefab'ın GUID'ini korur; diğer test sahneleri oyuncuyu kaybetmez
             GameObject built = BuildPlayer(layers, actions);
             prefab = PrefabUtility.SaveAsPrefabAsset(built, PlayerPrefabPath);
             Object.DestroyImmediate(built);
             Debug.Log($"[KosKos] Player prefab'ı oluşturuldu: {PlayerPrefabPath}");
         }
-        else
-        {
-            Debug.Log("[KosKos] Var olan Player prefab'ı kullanıldı. Koda yeni bileşen eklendiyse prefab'ı silip sahneyi yeniden oluşturun.");
-        }
 
         var player = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
         player.transform.position = position;
         return player;
+    }
+
+    // Prefab eksik bileşen içeriyorsa kullanıcıya sorar; true = yeniden oluştur
+    private static bool ShouldRebuildOutdated(GameObject prefab)
+    {
+        var missing = new System.Text.StringBuilder();
+        foreach (System.Type type in RequiredPlayerComponents)
+        {
+            if (prefab.GetComponent(type) == null) missing.Append(type.Name).Append(' ');
+        }
+
+        if (missing.Length == 0)
+        {
+            Debug.Log("[KosKos] Var olan Player prefab'ı kullanıldı.");
+            return false;
+        }
+
+        bool rebuild = EditorUtility.DisplayDialog(
+            "Player prefab'ı eski",
+            $"Eksik bileşenler: {missing}\n\nPrefab şimdi yeniden oluşturulsun mu?\n" +
+            "(Kilit açma tiklerini — çift zıplama, sıyrılganlık, savuşturma — tekrar işaretlemen gerekir.)",
+            "Yeniden oluştur",
+            "Eski prefab ile devam et");
+
+        if (!rebuild)
+        {
+            Debug.LogWarning($"[KosKos] Eski Player prefab'ı kullanıldı; eksik bileşenler: {missing}");
+        }
+        return rebuild;
     }
 
     public static void AddFollowCamera(GameObject player)
@@ -99,6 +134,8 @@ public static class TestSceneBuilderUtils
         var dash = player.AddComponent<DashAbility>();
         var sword = player.AddComponent<SwordAttack>();
         player.AddComponent<BoostChargeAbility>();
+        player.AddComponent<ZiplineRider>();
+        player.AddComponent<SlingAbility>();
         var tint = player.AddComponent<ChargeTintPlaceholder>();
 
         SetField(inputReader, "actions", actions);
@@ -117,7 +154,82 @@ public static class TestSceneBuilderUtils
         flashRenderer.enabled = false;
         SetField(sword, "hitboxVisual", flashRenderer);
 
+        BuildBalanceBar(player);
+        BuildSlingArrow(player);
+
         return player;
+    }
+
+    // GEÇİCİ zipline denge çubuğu: karakterin üstünde, kameraya doğru hafif önde
+    private static void BuildBalanceBar(GameObject player)
+    {
+        var barRoot = new GameObject("BalanceBar");
+        barRoot.transform.SetParent(player.transform, false);
+        barRoot.transform.localPosition = new Vector3(0f, 1.6f, -0.6f);
+
+        GameObject bar = Quad(barRoot.transform, "Bar", Vector3.zero, new Vector3(1.5f, 0.15f, 1f));
+        Colorize(bar, BalanceBarColor);
+        GameObject cursor = Quad(barRoot.transform, "Cursor", new Vector3(0f, 0f, -0.01f), new Vector3(0.1f, 0.3f, 1f));
+
+        TextMesh left = Text(barRoot.transform, "KeyA", "A", new Vector3(-1f, 0f, 0f));
+        TextMesh right = Text(barRoot.transform, "KeyD", "D", new Vector3(1f, 0f, 0f));
+
+        var view = player.AddComponent<BalanceBarPlaceholder>();
+        SetField(view, "barRoot", barRoot);
+        SetField(view, "cursor", cursor.GetComponent<Renderer>());
+        SetField(view, "leftKey", left);
+        SetField(view, "rightKey", right);
+
+        barRoot.SetActive(false);
+    }
+
+    // GEÇİCİ sapan oku ve "Space: fırlat" ipucu
+    private static void BuildSlingArrow(GameObject player)
+    {
+        var arrowObject = new GameObject("SlingArrow");
+        arrowObject.transform.SetParent(player.transform, false);
+        var line = arrowObject.AddComponent<LineRenderer>();
+        line.enabled = false;
+
+        TextMesh hint = Text(player.transform, "SlingHint", "Space: fırlat", new Vector3(0f, 1.8f, -0.6f));
+        hint.gameObject.SetActive(false);
+
+        var view = player.AddComponent<SlingArrowPlaceholder>();
+        SetField(view, "arrow", line);
+        SetField(view, "hint", hint.gameObject);
+    }
+
+    private static GameObject Quad(Transform parent, string name, Vector3 localPosition, Vector3 localScale)
+    {
+        GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        quad.name = name;
+        Object.DestroyImmediate(quad.GetComponent<Collider>());
+        quad.transform.SetParent(parent, false);
+        quad.transform.localPosition = localPosition;
+        quad.transform.localScale = localScale;
+        return quad;
+    }
+
+    // Unity'nin yerleşik fontuyla basit 3B yazı (TextMeshPro kurulumu gerekmez)
+    public static TextMesh Text(Transform parent, string name, string text, Vector3 localPosition)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent, false);
+        go.transform.localPosition = localPosition;
+
+        var textMesh = go.AddComponent<TextMesh>();
+        Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        textMesh.font = font;
+        textMesh.text = text;
+        textMesh.anchor = TextAnchor.MiddleCenter;
+        textMesh.alignment = TextAlignment.Center;
+        textMesh.fontSize = 48;
+        textMesh.characterSize = 0.05f;
+
+        MeshRenderer meshRenderer = go.GetComponent<MeshRenderer>();
+        if (meshRenderer == null) meshRenderer = go.AddComponent<MeshRenderer>();
+        meshRenderer.sharedMaterial = font.material;
+        return textMesh;
     }
 
     // xStart-xEnd arası, üst yüzeyi y=0 olan zemin

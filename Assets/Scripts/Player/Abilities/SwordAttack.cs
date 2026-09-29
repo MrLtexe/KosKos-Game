@@ -51,6 +51,8 @@ public class SwordAttack : MonoBehaviour
     private PlayerInputReader input;
     private PlayerDeath death;
     private DashAbility dash;
+    // İsteğe bağlı: sapan yavaşlamasında sadece zıplama çalışır (D.7), kılıç kullanılamaz
+    private SlingAbility sling;
 
     private float attackStartTime = float.NegativeInfinity;
     private bool dashRefreshedThisSwing;
@@ -62,6 +64,7 @@ public class SwordAttack : MonoBehaviour
         input = GetComponent<PlayerInputReader>();
         death = GetComponent<PlayerDeath>();
         dash = GetComponent<DashAbility>();
+        sling = GetComponent<SlingAbility>();
         SetVisual(false);
     }
 
@@ -80,6 +83,7 @@ public class SwordAttack : MonoBehaviour
     private void OnSwordPressed()
     {
         if (death.IsDead) return;
+        if (sling != null && sling.IsSlinging) return;
         if (Time.fixedTime < attackStartTime + attackCooldown) return;
 
         IsAttacking = true;
