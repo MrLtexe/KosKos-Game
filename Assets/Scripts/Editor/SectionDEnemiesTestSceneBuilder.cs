@@ -18,13 +18,20 @@ public static class SectionDEnemiesTestSceneBuilder
     private static readonly Color TurretBulletColor = new Color(1f, 0.9f, 0.1f);
     private static readonly Color DroneBulletColor = new Color(0.55f, 0.2f, 1f);
 
+    // Diğer builder'lar (prototip bölümler) için hazır mermi prefab'ları
+    internal static Bullet TurretBullet(U.Layers layers) =>
+        GetOrCreateBulletPrefab(TurretBulletPath, layers, true, Bullet.DodgeRule.AnyDash, TurretBulletColor);
+
+    internal static Bullet DroneBullet(U.Layers layers) =>
+        GetOrCreateBulletPrefab(DroneBulletPath, layers, false, Bullet.DodgeRule.PhaseDash, DroneBulletColor);
+
     [MenuItem("KosKos/Build Section D Enemies Test Scene")]
     private static void Build()
     {
         if (!U.BeginScene(out Scene scene, out InputActionAsset actions, out U.Layers layers)) return;
 
-        Bullet turretBullet = GetOrCreateBulletPrefab(TurretBulletPath, layers, true, Bullet.DodgeRule.AnyDash, TurretBulletColor);
-        Bullet droneBullet = GetOrCreateBulletPrefab(DroneBulletPath, layers, false, Bullet.DodgeRule.PhaseDash, DroneBulletColor);
+        Bullet turretBullet = TurretBullet(layers);
+        Bullet droneBullet = DroneBullet(layers);
 
         Transform level = new GameObject("Level").transform;
         U.Ground(level, layers.Ground, "Ground", -5f, 200f);
@@ -49,7 +56,7 @@ public static class SectionDEnemiesTestSceneBuilder
         U.SaveScene(scene, ScenePath);
     }
 
-    private static void Turret(Transform parent, U.Layers layers, string name, float x, Bullet bulletPrefab)
+    internal static void Turret(Transform parent, U.Layers layers, string name, float x, Bullet bulletPrefab)
     {
         // Tavan bloğu (y 8-9) ve altına asılı silah; kılıç menzilinin dışında
         U.Block(parent, layers.Ground, name + "_Ceiling", x - 3f, 8f, 6f, 1f);
@@ -66,7 +73,7 @@ public static class SectionDEnemiesTestSceneBuilder
             18f, 0.6f, 1.5f, 1, 0f, 14f);
     }
 
-    private static void Drone(Transform parent, U.Layers layers, string name, float x, float y, Bullet bulletPrefab, float range)
+    internal static void Drone(Transform parent, U.Layers layers, string name, float x, float y, Bullet bulletPrefab, float range)
     {
         GameObject drone = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         drone.name = name;

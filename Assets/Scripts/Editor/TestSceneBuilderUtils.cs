@@ -9,17 +9,21 @@ public static class TestSceneBuilderUtils
 {
     public const string InputAssetPath = "Assets/Input/KosKosControls.inputactions";
     public const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
+    public const string TestLoadoutPath = "Assets/Loadouts/Test_AllUnlocked.asset";
     public const float LevelDepth = 3f;
 
     private static readonly Color SwordFlashColor = new Color(1f, 0.95f, 0.3f);
     private static readonly Color BalanceBarColor = new Color(0.15f, 0.15f, 0.15f);
+    private static readonly Color FuelColor = new Color(0.3f, 0.9f, 0.35f);
 
     // Güncel Player prefab'ında olması gereken bileşenler; eksikse prefab eski demektir
     private static readonly System.Type[] RequiredPlayerComponents =
     {
         typeof(PlayerInputReader), typeof(PlayerMotor), typeof(PlayerDeath), typeof(JumpAbility),
         typeof(DashAbility), typeof(SwordAttack), typeof(BoostChargeAbility), typeof(ZiplineRider),
-        typeof(SlingAbility), typeof(ChargeTintPlaceholder), typeof(BalanceBarPlaceholder), typeof(SlingArrowPlaceholder)
+        typeof(SlingAbility), typeof(ChargeTintPlaceholder), typeof(BalanceBarPlaceholder), typeof(SlingArrowPlaceholder),
+        typeof(PlayerLoadout), typeof(HookAbility), typeof(HookRopePlaceholder),
+        typeof(JetBagAbility), typeof(FuelBarPlaceholder), typeof(MagBootsAbility)
     };
 
     public struct Layers
@@ -56,7 +60,35 @@ public static class TestSceneBuilderUtils
         scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         // Yeni sahne açılınca Unity kullanılmayan asset'leri bellekten atar; bu yüzden asset'ler sahne açıldıktan sonra yüklenir
         actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputAssetPath);
+
+        // Her test sahnesi ortak "her şey açık" loadout'unu kullanır
+        var settings = new GameObject("LevelSettings").AddComponent<LevelSettings>();
+        SetField(settings, "loadout", GetOrCreateTestLoadout());
         return true;
+    }
+
+    // Test loadout'u varsa onu kullanır (tikleri korunur), yoksa her şey açık olarak oluşturur
+    private static AbilityLoadout GetOrCreateTestLoadout()
+    {
+        var existing = AssetDatabase.LoadAssetAtPath<AbilityLoadout>(TestLoadoutPath);
+        if (existing != null) return existing;
+
+        EnsureFolder("Assets", "Loadouts");
+        var loadout = ScriptableObject.CreateInstance<AbilityLoadout>();
+        AssetDatabase.CreateAsset(loadout, TestLoadoutPath);
+
+        var so = new SerializedObject(loadout);
+        so.FindProperty("doubleJump").boolValue = true;
+        so.FindProperty("phase").boolValue = true;
+        so.FindProperty("parry").boolValue = true;
+        so.FindProperty("hook").boolValue = true;
+        so.FindProperty("jetBag").boolValue = true;
+        so.FindProperty("magBoots").boolValue = true;
+        so.ApplyModifiedPropertiesWithoutUndo();
+        AssetDatabase.SaveAssets();
+
+        Debug.Log($"[KosKos] Test loadout'u oluşturuldu (her şey açık): {TestLoadoutPath}");
+        return loadout;
     }
 
     public static void SaveScene(Scene scene, string path)
@@ -103,7 +135,7 @@ public static class TestSceneBuilderUtils
         bool rebuild = EditorUtility.DisplayDialog(
             "Player prefab'ı eski",
             $"Eksik bileşenler: {missing}\n\nPrefab şimdi yeniden oluşturulsun mu?\n" +
-            "(Kilit açma tiklerini — çift zıplama, sıyrılganlık, savuşturma — tekrar işaretlemen gerekir.)",
+            "(Prefab üzerinde elle yaptığın ayar değişiklikleri sıfırlanır. Yetenek kilitleri artık prefab'da değil, bölümün AbilityLoadout'unda.)",
             "Yeniden oluştur",
             "Eski prefab ile devam et");
 
@@ -136,7 +168,11 @@ public static class TestSceneBuilderUtils
         player.AddComponent<BoostChargeAbility>();
         player.AddComponent<ZiplineRider>();
         player.AddComponent<SlingAbility>();
+        player.AddComponent<HookAbility>();
+        player.AddComponent<JetBagAbility>();
+        player.AddComponent<MagBootsAbility>();
         var tint = player.AddComponent<ChargeTintPlaceholder>();
+        player.AddComponent<PlayerLoadout>();
 
         SetField(inputReader, "actions", actions);
         SetLayerMask(motor, "groundLayers", LevelMask(layers));
@@ -156,6 +192,8 @@ public static class TestSceneBuilderUtils
 
         BuildBalanceBar(player);
         BuildSlingArrow(player);
+        BuildHookRope(player);
+        BuildFuelBar(player);
 
         return player;
     }
@@ -197,6 +235,37 @@ public static class TestSceneBuilderUtils
         var view = player.AddComponent<SlingArrowPlaceholder>();
         SetField(view, "arrow", line);
         SetField(view, "hint", hint.gameObject);
+    }
+
+    // GEÇİCİ kanca ipi
+    private static void BuildHookRope(GameObject player)
+    {
+        var ropeObject = new GameObject("HookRope");
+        ropeObject.transform.SetParent(player.transform, false);
+        var line = ropeObject.AddComponent<LineRenderer>();
+        line.enabled = false;
+
+        var view = player.AddComponent<HookRopePlaceholder>();
+        SetField(view, "rope", line);
+    }
+
+    // GEÇİCİ jet-çanta yakıt çubuğu: karakterin üstünde, depo dolu değilken görünür
+    private static void BuildFuelBar(GameObject player)
+    {
+        var barRoot = new GameObject("FuelBar");
+        barRoot.transform.SetParent(player.transform, false);
+        barRoot.transform.localPosition = new Vector3(0f, 1.4f, -0.6f);
+
+        GameObject back = Quad(barRoot.transform, "Back", Vector3.zero, new Vector3(1.2f, 0.12f, 1f));
+        Colorize(back, BalanceBarColor);
+        GameObject fill = Quad(barRoot.transform, "Fill", new Vector3(0f, 0f, -0.01f), new Vector3(1.2f, 0.12f, 1f));
+        Colorize(fill, FuelColor);
+
+        var view = player.AddComponent<FuelBarPlaceholder>();
+        SetField(view, "barRoot", barRoot);
+        SetField(view, "fill", fill.transform);
+
+        barRoot.SetActive(false);
     }
 
     private static GameObject Quad(Transform parent, string name, Vector3 localPosition, Vector3 localScale)

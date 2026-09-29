@@ -87,6 +87,8 @@ public class ZiplineRider : MonoBehaviour
         if (IsRiding || death.IsDead) return;
         if (zipline == blockedZipline) return;
         if (!motor.TryAcquireControl(this)) return;
+        // Metal tavan / duvar modundan çık; bu yetenek normal yerçekimiyle çalışır ve biter
+        motor.ExitSurfaceModes();
 
         current = zipline;
         distance = zipline.DistanceAlong(motor.Position);

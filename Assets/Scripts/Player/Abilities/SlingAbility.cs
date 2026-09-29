@@ -86,6 +86,8 @@ public class SlingAbility : MonoBehaviour
         if (IsSlinging || death.IsDead || motor.IsGrounded) return;
         if (zone == lastZone && Time.unscaledTime < reentryAllowedRealTime) return;
         if (!motor.TryAcquireControl(this)) return;
+        // Metal tavan / duvar modundan çık; bu yetenek normal yerçekimiyle çalışır ve biter
+        motor.ExitSurfaceModes();
 
         IsSlinging = true;
         currentZone = zone;
@@ -111,6 +113,13 @@ public class SlingAbility : MonoBehaviour
     private void Update()
     {
         if (!IsSlinging) return;
+
+        // Oyun duraklatıldıysa (timeScale 0) yavaşlama süresi de durur; yoksa menü açıkken fırlatma olur ve zaman normale döner
+        if (Time.timeScale == 0f)
+        {
+            slowEndRealTime += Time.unscaledDeltaTime;
+            return;
+        }
 
         UpdateAim();
         if (launchRequested || Time.unscaledTime >= slowEndRealTime)

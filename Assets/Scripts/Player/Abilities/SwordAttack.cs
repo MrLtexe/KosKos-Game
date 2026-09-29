@@ -28,16 +28,13 @@ public class SwordAttack : MonoBehaviour
     [Tooltip("Kılıcın vurabileceği layer'lar. Player layer'ı dahil edilmemeli.")]
     [SerializeField] private LayerMask hitLayers = ~0;
 
-    [Header("Savuşturma")]
-    [Tooltip("Savuşturma açıldı mı? (Oyunun ileriki bölümlerinde açılır.) Açıksa doğru zamanda vurulan savuşturulabilir mermiler sahibine geri döner.")]
-    [SerializeField] private bool parryUnlocked;
-
     [Header("Geçici Görsel")]
     [Tooltip("GEÇİCİ: isabet kutusu aktifken gösterilen görsel. Animasyon gelince kaldırılacak. Boş bırakılabilir.")]
     [SerializeField] private Renderer hitboxVisual;
 
     public bool IsAttacking { get; private set; }
-    public bool ParryUnlocked => parryUnlocked;
+    // Savuşturma açık mı? Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
+    public bool ParryUnlocked { get; set; }
 
     // Görselin kapsülün arkasında kalması için Z kaydırması
     private const float VisualDepthOffset = 0.6f;
@@ -53,6 +50,8 @@ public class SwordAttack : MonoBehaviour
     private DashAbility dash;
     // İsteğe bağlı: sapan yavaşlamasında sadece zıplama çalışır (D.7), kılıç kullanılamaz
     private SlingAbility sling;
+    // İsteğe bağlı: jet-çanta itkisi sürerken kılıç kullanılamaz
+    private JetBagAbility jetBag;
 
     private float attackStartTime = float.NegativeInfinity;
     private bool dashRefreshedThisSwing;
@@ -65,6 +64,7 @@ public class SwordAttack : MonoBehaviour
         death = GetComponent<PlayerDeath>();
         dash = GetComponent<DashAbility>();
         sling = GetComponent<SlingAbility>();
+        jetBag = GetComponent<JetBagAbility>();
         SetVisual(false);
     }
 
@@ -84,6 +84,7 @@ public class SwordAttack : MonoBehaviour
     {
         if (death.IsDead) return;
         if (sling != null && sling.IsSlinging) return;
+        if (jetBag != null && jetBag.IsThrusting) return;
         if (Time.fixedTime < attackStartTime + attackCooldown) return;
 
         IsAttacking = true;

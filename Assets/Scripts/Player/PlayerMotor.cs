@@ -37,6 +37,10 @@ public class PlayerMotor : MonoBehaviour
     [Tooltip("Ayak seviyesinin bu kadar üstündeki temaslar önden çarpma sayılır. Zemin eklemlerinde yanlış ölümü engeller (birim).")]
     [SerializeField] private float stepTolerance = 0.15f;
 
+    [Header("Duvar Koşusu")]
+    [Tooltip("Duvar koşusu sırasında karakterin X ekseninde eğilme açısı (derece). Duvara tutunma hissi için.")]
+    [SerializeField] private float wallRunTilt = -10f;
+
     public event Action Landed;
     public event Action LeftGround;
     public event Action HitObstacle;
@@ -49,12 +53,21 @@ public class PlayerMotor : MonoBehaviour
     public Vector3 Velocity => rb.linearVelocity;
     // Fizik konumu (interpolasyonsuz); zipline gibi konum takibi yapan yetenekler için
     public Vector3 Position => rb.position;
+    // Kapsülün tepesi bir zemin layer'ına değiyor mu? (kanca sallanırken tavan çarpması)
+    public bool TouchingCeiling => CastFromEnd(Up);
+    // Karakterin "yukarı" yönü: normalde +Y, metal tavan modunda -Y (Manyetik Botlar)
+    public Vector3 Up => new Vector3(0f, upSign, 0f);
+    public bool IsCeilingMode => upSign < 0f;
+    // Duvar koşusu: yerçekimi yok, zeminde sayılır
+    public bool IsWallRunning { get; private set; }
+    public LayerMask GroundLayers => groundLayers;
 
     private Rigidbody rb;
     private CapsuleCollider capsule;
     private float currentSpeed;
     private object controlOwner;
     private bool frozen;
+    private float upSign = 1f;
 
     // Zemin taramasının başlangıcını biraz yukarı alır; başlangıçta zemine gömülü kalmasın diye
     private const float CastSkin = 0.05f;
@@ -97,7 +110,8 @@ public class PlayerMotor : MonoBehaviour
 
         UpdateHorizontalSpeed(Time.fixedDeltaTime);
 
-        float verticalVelocity = rb.linearVelocity.y - gravity * Time.fixedDeltaTime;
+        // Duvar koşusunda yerçekimi yok; tavan modunda yerçekimi ters yönde
+        float verticalVelocity = IsWallRunning ? 0f : rb.linearVelocity.y - upSign * gravity * Time.fixedDeltaTime;
         rb.linearVelocity = new Vector3(currentSpeed, verticalVelocity, 0f);
     }
 
@@ -105,15 +119,10 @@ public class PlayerMotor : MonoBehaviour
     {
         bool wasGrounded = IsGrounded;
 
-        float radius = capsule.radius * 0.95f;
-        // Kapsülün alt küresinin merkezi
-        Vector3 bottomSphere = transform.position + capsule.center + Vector3.down * (capsule.height * 0.5f - capsule.radius);
-        Vector3 origin = bottomSphere + Vector3.up * CastSkin;
+        bool hit = CastFromEnd(-Up);
 
-        bool hit = Physics.SphereCast(origin, radius, Vector3.down, out _, groundCheckDistance + CastSkin,
-            groundLayers, QueryTriggerInteraction.Ignore);
-
-        IsGrounded = hit && rb.linearVelocity.y <= GroundedMaxUpVelocity;
+        // Duvar koşusu zemin sayılır; "yukarı" doğru hızlı gidiyorsak zeminde değiliz
+        IsGrounded = IsWallRunning || (hit && rb.linearVelocity.y * upSign <= GroundedMaxUpVelocity);
 
         if (!wasGrounded && IsGrounded)
         {
@@ -123,6 +132,16 @@ public class PlayerMotor : MonoBehaviour
         {
             LeftGround?.Invoke();
         }
+    }
+
+    // Kapsülün bir ucundaki küreden verilen yöne kısa bir tarama (zemin veya tavan teması)
+    private bool CastFromEnd(Vector3 direction)
+    {
+        float radius = capsule.radius * 0.95f;
+        Vector3 endSphere = transform.position + capsule.center + direction * (capsule.height * 0.5f - capsule.radius);
+        Vector3 origin = endSphere - direction * CastSkin;
+        return Physics.SphereCast(origin, radius, direction, out _, groundCheckDistance + CastSkin,
+            groundLayers, QueryTriggerInteraction.Ignore);
     }
 
     private void UpdateHorizontalSpeed(float dt)
@@ -154,13 +173,14 @@ public class PlayerMotor : MonoBehaviour
         // Boost'luyken kırılabilire önden çarpmak onu kırar (D.3), ölüm olmaz
         Breakable breakable = IsBoosted ? collision.collider.GetComponentInParent<Breakable>() : null;
 
-        float feetY = capsule.bounds.min.y;
+        // Ayak seviyesi: tavan modunda kapsülün üst ucu
+        float feetY = IsCeilingMode ? capsule.bounds.max.y : capsule.bounds.min.y;
         int count = collision.contactCount;
         for (int i = 0; i < count; i++)
         {
             ContactPoint contact = collision.GetContact(i);
-            // Yüzey koşu yönüne karşı bakıyorsa ve ayak seviyesinin üstündeyse: önden çarpma
-            if (contact.normal.x < -frontalHitThreshold && contact.point.y > feetY + stepTolerance)
+            // Yüzey koşu yönüne karşı bakıyorsa ve ayak seviyesinin "üstündeyse": önden çarpma
+            if (contact.normal.x < -frontalHitThreshold && (contact.point.y - feetY) * upSign > stepTolerance)
             {
                 if (breakable != null)
                 {
@@ -174,11 +194,12 @@ public class PlayerMotor : MonoBehaviour
         }
     }
 
-    // Verilen yüksekliğe ulaşacak dikey hızı uygular
+    // Verilen yüksekliğe ulaşacak dikey hızı uygular ("yukarı" yönünde). Duvar koşusundan zıplamak onu bitirir.
     public void Jump(float height)
     {
+        if (IsWallRunning) SetWallRun(false);
         Vector3 v = rb.linearVelocity;
-        v.y = Mathf.Sqrt(2f * gravity * height);
+        v.y = upSign * Mathf.Sqrt(2f * gravity * height);
         rb.linearVelocity = v;
     }
 
@@ -223,6 +244,43 @@ public class PlayerMotor : MonoBehaviour
         rb.excludeLayers = layers;
     }
 
+    // Metal tavan modu: yerçekimi ters döner, karakter baş aşağı çevrilir (X ekseni etrafında; yüzü hâlâ ileri bakar)
+    public void SetGravityFlipped(bool flipped)
+    {
+        upSign = flipped ? -1f : 1f;
+        ApplyRotation();
+    }
+
+    // Duvar koşusu: açılınca dikey hız sıfırlanır, yerçekimi kapanır ve karakter wallRunTilt kadar eğilir
+    public void SetWallRun(bool on)
+    {
+        IsWallRunning = on;
+        if (on)
+        {
+            Vector3 v = rb.linearVelocity;
+            v.y = 0f;
+            rb.linearVelocity = v;
+        }
+        ApplyRotation();
+    }
+
+    // Kanca, zipline, sapan gibi yetenekler normal yerçekimiyle çalışır; kilidi alınca bunu çağırırlar
+    public void ExitSurfaceModes()
+    {
+        if (IsCeilingMode) SetGravityFlipped(false);
+        if (IsWallRunning) SetWallRun(false);
+    }
+
+    // Karakterin dönüşü yüzey moduna göre: tavan = baş aşağı, duvar koşusu = hafif eğik, normal = düz
+    private void ApplyRotation()
+    {
+        Quaternion rotation = IsCeilingMode ? Quaternion.Euler(180f, 0f, 0f)
+            : IsWallRunning ? Quaternion.Euler(wallRunTilt, 0f, 0f)
+            : Quaternion.identity;
+        rb.rotation = rotation;
+        transform.rotation = rotation;
+    }
+
     // Kapsül şu an verilen layer'lardaki bir collider'ın içinde mi?
     public bool OverlapsAny(LayerMask layers)
     {
@@ -250,6 +308,7 @@ public class PlayerMotor : MonoBehaviour
         currentSpeed = runSpeed;
         controlOwner = null;
         rb.excludeLayers = 0;
+        ExitSurfaceModes();
         IsGrounded = false;
     }
 }

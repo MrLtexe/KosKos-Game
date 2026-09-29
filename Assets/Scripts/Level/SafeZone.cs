@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 // Güvenli alan: oyuncu girince yeni doğma noktası olur.
@@ -12,6 +13,9 @@ public class SafeZone : MonoBehaviour
     [SerializeField] private bool isStartZone;
 
     private static SafeZone current;
+
+    // Yeni bir güvenli alana ulaşıldı (başlangıç alanı hariç). Bölüm akışı toplanabilirleri güvenceye almak için dinler.
+    public static event Action<SafeZone> Activated;
 
     public static Vector3 CurrentSpawnPosition
     {
@@ -32,6 +36,7 @@ public class SafeZone : MonoBehaviour
     private static void ResetStatics()
     {
         current = null;
+        Activated = null;
     }
 
     private void Awake()
@@ -54,6 +59,7 @@ public class SafeZone : MonoBehaviour
         {
             current = this;
             Debug.Log($"[KosKos] Güvenli alan: {name}");
+            Activated?.Invoke(this);
         }
     }
 }

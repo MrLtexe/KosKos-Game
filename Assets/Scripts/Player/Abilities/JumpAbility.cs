@@ -21,13 +21,12 @@ public class JumpAbility : MonoBehaviour
     [SerializeField] private float jumpBufferTime = 0.1f;
 
     [Header("Çift Zıplama")]
-    [Tooltip("Çift zıplama açıldı mı? (Oyunda ilerledikçe açılır.)")]
-    [SerializeField] private bool doubleJumpUnlocked;
-
     [Tooltip("Havadaki ikinci zıplamanın (ve fırlatma alanı ek zıplamasının) yüksekliği (birim).")]
     [SerializeField] private float doubleJumpHeight = 2.5f;
 
     public float JumpHeight => jumpHeight;
+    // Çift zıplama açık mı? Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
+    public bool DoubleJumpUnlocked { get; set; }
 
     private PlayerMotor motor;
     private PlayerInputReader input;
@@ -98,7 +97,7 @@ public class JumpAbility : MonoBehaviour
             return true;
         }
 
-        if (doubleJumpUnlocked && !airJumpUsed)
+        if (DoubleJumpUnlocked && !airJumpUsed)
         {
             motor.Jump(doubleJumpHeight);
             airJumpUsed = true;

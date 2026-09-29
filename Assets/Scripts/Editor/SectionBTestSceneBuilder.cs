@@ -49,13 +49,14 @@ public static class SectionBTestSceneBuilder
         U.Block(parent, groundLayer, "LowCeiling", 115f, 3.2f, 10f, 1f);
 
         // --- Faz 2 bölümü ---
+        // Kırılabilirler Ground layer'ında: sıyrılganlık ile içlerinden geçilemez, sadece kılıç veya boost ile aşılır
         // Yerdeki kırılabilir: kılıçla kır ya da çarpıp öl
-        BreakableBlock(parent, phaseableLayer, "Breakable_Ground", 145f, 0f, 1f, 2f);
+        BreakableBlock(parent, groundLayer, "Breakable_Ground", 145f, 0f, 1f, 2f);
         // Havadaki kırılabilir: havada kılıçla vurunca atılma yenilenir (yerden kılıçla erişilemeyecek yükseklikte)
-        BreakableBlock(parent, phaseableLayer, "Breakable_Floating", 160f, 3f, 1f, 1f);
+        BreakableBlock(parent, groundLayer, "Breakable_Floating", 160f, 3f, 1f, 1f);
         // 175-195 arası düz alan: Boost şarjı denemek için
         // Yüksek kırılabilir duvar: zıplanamaz; boost'la çarp veya kılıçla kır
-        BreakableBlock(parent, phaseableLayer, "Breakable_TallWall", 195f, 0f, 1f, 6f);
+        BreakableBlock(parent, groundLayer, "Breakable_TallWall", 195f, 0f, 1f, 6f);
         // İnce duvar: sadece sıyrılganlık ile atılarak geçilir
         GameObject thinWall = U.Block(parent, phaseableLayer, "ThinWall_Phase", 225f, 0f, 0.3f, 6f);
         U.Colorize(thinWall, ThinWallColor);
@@ -67,9 +68,9 @@ public static class SectionBTestSceneBuilder
         U.KillZone(parent, 120f, 400f);
     }
 
-    private static void BreakableBlock(Transform parent, int phaseableLayer, string name, float xLeft, float yBottom, float width, float height)
+    internal static void BreakableBlock(Transform parent, int layer, string name, float xLeft, float yBottom, float width, float height)
     {
-        GameObject block = U.Block(parent, phaseableLayer, name, xLeft, yBottom, width, height);
+        GameObject block = U.Block(parent, layer, name, xLeft, yBottom, width, height);
         block.AddComponent<Breakable>();
         U.Colorize(block, BreakableColor);
     }

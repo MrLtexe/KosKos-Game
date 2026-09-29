@@ -46,7 +46,7 @@ public static class SectionDTraversalTestSceneBuilder
         U.SaveScene(scene, ScenePath);
     }
 
-    private static void LaunchPadAt(Transform parent, string name, float xLeft)
+    internal static void LaunchPadAt(Transform parent, string name, float xLeft)
     {
         // Zeminde ince yeşil plaka; trigger olduğu için üstünden koşarken takılmaz
         GameObject pad = U.Block(parent, 0, name, xLeft, 0f, 1.5f, 0.2f);
@@ -55,7 +55,7 @@ public static class SectionDTraversalTestSceneBuilder
         U.Colorize(pad, PadColor);
     }
 
-    private static void ZiplineBetween(Transform parent, string name, Vector3 start, Vector3 end)
+    internal static void ZiplineBetween(Transform parent, string name, Vector3 start, Vector3 end)
     {
         Vector3 middle = (start + end) * 0.5f;
         Vector3 delta = end - start;
@@ -92,7 +92,7 @@ public static class SectionDTraversalTestSceneBuilder
         U.SetField(zipline, "end", endPoint);
     }
 
-    private static void SlingZoneAt(Transform parent, string name, Vector3 center)
+    internal static void SlingZoneAt(Transform parent, string name, Vector3 center)
     {
         GameObject zone = GameObject.CreatePrimitive(PrimitiveType.Cube);
         zone.name = name;

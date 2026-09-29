@@ -1,0 +1,24 @@
+YETENEK LOADOUT'U - NASIL KULLANILIR
+====================================
+
+Loadout = bir bölümde oyuncunun hangi yeteneklere sahip olduğu
+(Çift Zıplama, Sıyrılganlık, Savuşturma, Kanca, Jet-Çanta, Manyetik Botlar).
+
+
+YENİ BİR BÖLÜM İÇİN
+-------------------
+1. Project penceresinde sağ tık > Create > KosKos > Ability Loadout
+   Adını bölüme göre ver (ör. Level3_Loadout) ve açık olacak yeteneklerin tikini işaretle.
+
+2. Bölüm sahnesinde boş bir GameObject oluştur, adı "LevelSettings" olsun.
+   Ona "Level Settings" bileşenini ekle ve loadout'u "Loadout" kutusuna sürükle.
+
+3. Player prefab'ını sahneye koy. Bölüm başlayınca yetenekler otomatik ayarlanır.
+
+
+BİLMEN GEREKENLER
+-----------------
+- Sahnede LevelSettings yoksa tüm yetenekler KAPALI başlar (Console'da sarı uyarı çıkar).
+- Play sırasında loadout'taki tikleri değiştirirsen anında etki eder.
+- DİKKAT: Play sırasında yapılan bu değişiklikler Play bitince GERİ ALINMAZ (asset olduğu için).
+- Test sahneleri "Assets/Loadouts/Test_AllUnlocked" loadout'unu kullanır (her şey açık).

@@ -18,9 +18,6 @@ public class DashAbility : MonoBehaviour
     [SerializeField] private float groundDashCooldown = 0.3f;
 
     [Header("Sıyrılganlık")]
-    [Tooltip("Sıyrılganlık açıldı mı? (Oyunda ilerledikçe açılır.) Açıksa atılırken ince duvarların ve kırılabilirlerin içinden geçer.")]
-    [SerializeField] private bool phaseUnlocked;
-
     [Tooltip("Sıyrılganlık ile içinden geçilebilen layer'lar (Phaseable). Kalın duvarlar bu layer'da OLMAMALI.")]
     [SerializeField] private LayerMask phaseableLayers;
 
@@ -29,6 +26,9 @@ public class DashAbility : MonoBehaviour
     [SerializeField] private float dodgeGraceTime = 0.1f;
 
     public bool IsDashing { get; private set; }
+    // Sıyrılganlık açık mı? Açıksa atılırken Phaseable layer'ındaki nesnelerin (ince duvarlar) içinden geçer.
+    // Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
+    public bool PhaseUnlocked { get; set; }
     // Mermiden kaçış: atılma sürüyor ya da atılma yeni bitti (tavan silahı mermileri)
     public bool IsDodging => IsDashing || Time.time < dodgeGraceEndTime;
     // Sıyrılganlıklı kaçış: sıyrılganlıklı atılma sürüyor ya da yeni bitti (dron mermileri)
@@ -72,7 +72,8 @@ public class DashAbility : MonoBehaviour
 
     private void OnDashPressed()
     {
-        if (IsDashing || death.IsDead || blockedUntilLanded) return;
+        // Duvar koşusunda atılma yok
+        if (IsDashing || death.IsDead || blockedUntilLanded || motor.IsWallRunning) return;
 
         bool grounded = motor.IsGrounded;
         if (grounded)
@@ -93,7 +94,7 @@ public class DashAbility : MonoBehaviour
         // Fizik zamanına göre ölçülür; FixedUpdate'teki kontrol ile aynı saat kullanılsın diye
         dashEndTime = Time.fixedTime + dashDuration;
 
-        isPhasing = phaseUnlocked;
+        isPhasing = PhaseUnlocked;
         if (isPhasing) motor.SetExcludedLayers(phaseableLayers);
 
         motor.SetVelocity(new Vector3(dashSpeed, 0f, 0f));

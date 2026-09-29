@@ -14,10 +14,14 @@ public class PlayerInputReader : MonoBehaviour
     public event Action SwordPressed;
     public event Action BoostPressed;
     public event Action BoostReleased;
+    public event Action HookReleased;
+    public event Action MagBootsPressed;
 
-    // Sürekli okunan değerler (event değil): zipline dengesi (-1..1) ve sapan nişanı (fare ekran konumu)
+    // Sürekli okunan değerler (event değil): zipline dengesi (-1..1), sapan nişanı (fare ekran konumu), jet-çanta ve kanca tuşları basılı mı
     public float BalanceInput => balanceAction.ReadValue<float>();
     public Vector2 AimScreenPosition => aimAction.ReadValue<Vector2>();
+    public bool JetBagHeld => jetBagAction.IsPressed();
+    public bool HookHeld => hookAction.IsPressed();
 
     private InputActionMap playerMap;
     private InputAction jumpAction;
@@ -26,9 +30,14 @@ public class PlayerInputReader : MonoBehaviour
     private InputAction boostAction;
     private InputAction balanceAction;
     private InputAction aimAction;
+    private InputAction hookAction;
+    private InputAction jetBagAction;
+    private InputAction magBootsAction;
 
     private void Awake()
     {
+        // Oyuncunun kaydettiği tuş atamaları (Ayarlar > Controls)
+        GameSettings.ApplyBindings(actions);
         playerMap = actions.FindActionMap("Player", true);
         jumpAction = playerMap.FindAction("Jump", true);
         dashAction = playerMap.FindAction("Dash", true);
@@ -36,6 +45,9 @@ public class PlayerInputReader : MonoBehaviour
         boostAction = playerMap.FindAction("BoostCharge", true);
         balanceAction = playerMap.FindAction("Balance", true);
         aimAction = playerMap.FindAction("Aim", true);
+        hookAction = playerMap.FindAction("Hook", true);
+        jetBagAction = playerMap.FindAction("JetBag", true);
+        magBootsAction = playerMap.FindAction("MagBoots", true);
     }
 
     private void OnEnable()
@@ -46,6 +58,8 @@ public class PlayerInputReader : MonoBehaviour
         boostAction.performed += OnBoostPressed;
         // Button tipinde tuş bırakılınca 'canceled' tetiklenir
         boostAction.canceled += OnBoostReleased;
+        hookAction.canceled += OnHookReleased;
+        magBootsAction.performed += OnMagBoots;
         playerMap.Enable();
     }
 
@@ -56,6 +70,8 @@ public class PlayerInputReader : MonoBehaviour
         swordAction.performed -= OnSword;
         boostAction.performed -= OnBoostPressed;
         boostAction.canceled -= OnBoostReleased;
+        hookAction.canceled -= OnHookReleased;
+        magBootsAction.performed -= OnMagBoots;
         playerMap.Disable();
     }
 
@@ -64,4 +80,6 @@ public class PlayerInputReader : MonoBehaviour
     private void OnSword(InputAction.CallbackContext _) => SwordPressed?.Invoke();
     private void OnBoostPressed(InputAction.CallbackContext _) => BoostPressed?.Invoke();
     private void OnBoostReleased(InputAction.CallbackContext _) => BoostReleased?.Invoke();
+    private void OnHookReleased(InputAction.CallbackContext _) => HookReleased?.Invoke();
+    private void OnMagBoots(InputAction.CallbackContext _) => MagBootsPressed?.Invoke();
 }

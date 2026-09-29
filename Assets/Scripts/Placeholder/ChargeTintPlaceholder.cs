@@ -13,12 +13,22 @@ public class ChargeTintPlaceholder : MonoBehaviour
 
     private BoostChargeAbility boost;
     private Material material;
+    // Şarj yokken (adım 0) kullanılan renk; giyili kostüm bunu değiştirir
+    private Color baseColor;
 
     private void Awake()
     {
         boost = GetComponent<BoostChargeAbility>();
         // Kopya malzeme; paylaşılan malzemeyi kullanan diğer nesneler etkilenmez
         material = targetRenderer.material;
+        baseColor = stepColors[0];
+    }
+
+    // GEÇİCİ kostüm: karakterin normal rengi (bölüm başında LevelRun ayarlar)
+    public void SetBaseColor(Color color)
+    {
+        baseColor = color;
+        if (boost.CurrentStep == 0) material.color = color;
     }
 
     private void OnEnable()
@@ -38,6 +48,6 @@ public class ChargeTintPlaceholder : MonoBehaviour
 
     private void OnStepChanged(int step)
     {
-        material.color = stepColors[Mathf.Clamp(step, 0, stepColors.Length - 1)];
+        material.color = step == 0 ? baseColor : stepColors[Mathf.Clamp(step, 0, stepColors.Length - 1)];
     }
 }

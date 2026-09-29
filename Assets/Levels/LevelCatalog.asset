@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 472e8f6c4188f5849979d2f85e055972, type: 3}
+  m_Name: LevelCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::LevelCatalog
+  entries:
+  - id: L1
+    displayName: Escape
+    sceneName: Level_01
+    belgeTitle: 'Document 1: The Dome'
+    belgeText: 'PLACEHOLDER: The company has claimed the last forests outside the
+      dome cities.'
+  - id: L2
+    displayName: Above the City
+    sceneName: Level_02
+    belgeTitle: 'Document 2: The Virus'
+    belgeText: 'PLACEHOLDER: The virus implanted in captured activists activates
+      the moment they stop.'
+  - id: L3
+    displayName: The Tower
+    sceneName: Level_03
+    belgeTitle: 'Document 3: The Tower'
+    belgeText: 'PLACEHOLDER: The last piece of the documents is hidden in the company''s
+      tower.'
