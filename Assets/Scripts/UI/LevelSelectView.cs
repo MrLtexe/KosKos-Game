@@ -41,7 +41,7 @@ public static class LevelSelectView
 
         int fabric = GameProgress.CountSecured(entry.id, GameProgress.KumasTag);
         int documents = GameProgress.CountSecured(entry.id, GameProgress.BelgeTag);
-        return $"{index + 1}. {entry.displayName}   |   {LevelHud.FormatTime(record.bestTime)}   Deaths {record.bestDeaths}   " +
+        return $"{index + 1}. {entry.displayName}   |   {LevelHud.FormatTime(record.bestTime)}   Deaths {(record.bestDeaths < 0 ? "-" : record.bestDeaths.ToString())}   " +
                $"{MedalRule.DisplayName(record.bestMedal)}   Fabric {fabric}   Document {documents}";
     }
 }

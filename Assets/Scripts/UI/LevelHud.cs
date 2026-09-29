@@ -52,8 +52,8 @@ public class LevelHud : MonoBehaviour
     public static string FormatTime(float seconds)
     {
         if (seconds < 0f) return "--:--";
-        int minutes = (int)(seconds / 60f);
-        float rest = seconds - minutes * 60f;
-        return $"{minutes:00}:{rest:00.0}";
+        // Onda birlerden hesaplanır; 59.97 gibi değerler "00:60.0" görünmesin
+        int tenths = (int)(seconds * 10f);
+        return $"{tenths / 600:00}:{tenths % 600 / 10:00}.{tenths % 10}";
     }
 }

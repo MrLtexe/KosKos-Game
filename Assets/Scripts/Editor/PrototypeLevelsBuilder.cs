@@ -373,6 +373,8 @@ public static class PrototypeLevelsBuilder
         }
 
         EditorBuildSettings.scenes = scenes.ToArray();
+        // Değişiklik diske yazılsın; yoksa commit'te eski liste kalabilir
+        AssetDatabase.SaveAssets();
         Debug.Log($"[KosKos] Build Settings güncellendi: {scenes.Count} sahne.");
     }
 }

@@ -65,6 +65,11 @@ public class PlayerInputReader : MonoBehaviour
 
     private void OnDisable()
     {
+        // Kapanırken basılı tutulan tuşlar "bırakıldı" sayılır; yoksa ör. duraklatmada bırakılan boost tuşu
+        // hiç bırakılmamış kalır ve şarj patlar, kanca tutunmaya devam eder
+        if (boostAction.IsPressed()) BoostReleased?.Invoke();
+        if (hookAction.IsPressed()) HookReleased?.Invoke();
+
         jumpAction.performed -= OnJump;
         dashAction.performed -= OnDash;
         swordAction.performed -= OnSword;

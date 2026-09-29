@@ -109,7 +109,8 @@ public class LevelRun : MonoBehaviour
 
     private void Update()
     {
-        if (!IsFinished && !Paused) Elapsed += Time.unscaledDeltaTime;
+        // Sınırlı: sahne yükleme takılması veya Editor'ün Pause butonu süreye büyük bir sıçrama eklemesin
+        if (!IsFinished && !Paused) Elapsed += Mathf.Min(Time.unscaledDeltaTime, Time.maximumDeltaTime);
     }
 
     public void OnCollected(Collectible collectible)
