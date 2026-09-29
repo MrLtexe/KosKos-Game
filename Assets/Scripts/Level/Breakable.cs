@@ -27,9 +27,10 @@ public class Breakable : MonoBehaviour, ISwordHittable
         PlayerDeath.AnyPlayerRespawned -= Restore;
     }
 
-    public void OnSwordHit(SwordAttack source)
+    public bool OnSwordHit(SwordAttack source)
     {
         Break();
+        return true;
     }
 
     public void Break()

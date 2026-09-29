@@ -24,7 +24,15 @@ public class DashAbility : MonoBehaviour
     [Tooltip("Sıyrılganlık ile içinden geçilebilen layer'lar (Phaseable). Kalın duvarlar bu layer'da OLMAMALI.")]
     [SerializeField] private LayerMask phaseableLayers;
 
+    [Header("Mermiden Kaçış")]
+    [Tooltip("Atılma bittikten sonra mermilerden kaçış korumasının devam ettiği ek süre (sn). Yelpaze mermilerinin hepsini tek atılmayla geçebilmek için.")]
+    [SerializeField] private float dodgeGraceTime = 0.1f;
+
     public bool IsDashing { get; private set; }
+    // Mermiden kaçış: atılma sürüyor ya da atılma yeni bitti (tavan silahı mermileri)
+    public bool IsDodging => IsDashing || Time.time < dodgeGraceEndTime;
+    // Sıyrılganlıklı kaçış: sıyrılganlıklı atılma sürüyor ya da yeni bitti (dron mermileri)
+    public bool IsPhaseDodging => isPhasing || (lastDashPhased && Time.time < dodgeGraceEndTime);
 
     private PlayerMotor motor;
     private PlayerInputReader input;
@@ -32,7 +40,9 @@ public class DashAbility : MonoBehaviour
 
     private bool airDashAvailable = true;
     private bool isPhasing;
+    private bool lastDashPhased;
     private float dashEndTime;
+    private float dodgeGraceEndTime = float.NegativeInfinity;
     private float lastGroundDashTime = float.NegativeInfinity;
 
     private void Awake()
@@ -105,6 +115,9 @@ public class DashAbility : MonoBehaviour
     private void EndDash()
     {
         IsDashing = false;
+        // Mermi koruması atılmadan sonra kısa bir süre daha devam eder
+        dodgeGraceEndTime = Time.time + dodgeGraceTime;
+        lastDashPhased = isPhasing;
         if (isPhasing)
         {
             motor.SetExcludedLayers(0);
@@ -123,11 +136,14 @@ public class DashAbility : MonoBehaviour
     {
         // Atılma sırasında ölürsek kilit takılı kalmasın
         if (IsDashing) EndDash();
+        // Ölümde ek koruma süresi taşınmaz
+        dodgeGraceEndTime = float.NegativeInfinity;
     }
 
     private void OnRespawned()
     {
         airDashAvailable = true;
         lastGroundDashTime = float.NegativeInfinity;
+        dodgeGraceEndTime = float.NegativeInfinity;
     }
 }

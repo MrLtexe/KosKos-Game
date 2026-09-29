@@ -45,6 +45,8 @@ public class PlayerMotor : MonoBehaviour
     public float CurrentSpeed => currentSpeed;
     public bool IsControlLocked => controlOwner != null;
     public bool IsBoosted => currentSpeed > runSpeed + BoostEpsilon;
+    // Düşmanların hedef önü nişan alması için
+    public Vector3 Velocity => rb.linearVelocity;
 
     private Rigidbody rb;
     private CapsuleCollider capsule;

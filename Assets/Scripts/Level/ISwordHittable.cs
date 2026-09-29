@@ -1,5 +1,6 @@
-// Kılıçla vurulabilen her şey (kırılabilirler; ileride düşmanlar ve savuşturulacak mermiler).
+// Kılıçla vurulabilen her şey (kırılabilirler, düşmanlar, mermiler).
+// Dönüş değeri: bu vuruş "gerçek isabet" sayıldı mı? (havada atılmayı sadece gerçek isabet yeniler)
 public interface ISwordHittable
 {
-    void OnSwordHit(SwordAttack source);
+    bool OnSwordHit(SwordAttack source);
 }

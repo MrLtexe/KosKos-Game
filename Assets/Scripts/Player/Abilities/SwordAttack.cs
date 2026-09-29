@@ -28,11 +28,16 @@ public class SwordAttack : MonoBehaviour
     [Tooltip("Kılıcın vurabileceği layer'lar. Player layer'ı dahil edilmemeli.")]
     [SerializeField] private LayerMask hitLayers = ~0;
 
+    [Header("Savuşturma")]
+    [Tooltip("Savuşturma açıldı mı? (Oyunun ileriki bölümlerinde açılır.) Açıksa doğru zamanda vurulan savuşturulabilir mermiler sahibine geri döner.")]
+    [SerializeField] private bool parryUnlocked;
+
     [Header("Geçici Görsel")]
     [Tooltip("GEÇİCİ: isabet kutusu aktifken gösterilen görsel. Animasyon gelince kaldırılacak. Boş bırakılabilir.")]
     [SerializeField] private Renderer hitboxVisual;
 
     public bool IsAttacking { get; private set; }
+    public bool ParryUnlocked => parryUnlocked;
 
     // Görselin kapsülün arkasında kalması için Z kaydırması
     private const float VisualDepthOffset = 0.6f;
@@ -110,8 +115,9 @@ public class SwordAttack : MonoBehaviour
     {
         // rb.position: interpolasyonlu transform bir fizik adımı geride kalır (atılırken ~0.4 birim)
         Vector3 center = rb.position + hitboxOffset;
+        // Collide: düşman gövdeleri ve mermiler trigger; onları da yakalamalıyız
         int count = Physics.OverlapBoxNonAlloc(center, hitboxSize * 0.5f, overlapBuffer, Quaternion.identity,
-            hitLayers, QueryTriggerInteraction.Ignore);
+            hitLayers, QueryTriggerInteraction.Collide);
 
         for (int i = 0; i < count; i++)
         {
@@ -120,10 +126,10 @@ public class SwordAttack : MonoBehaviour
             if (hittable == null || hitThisSwing.Contains(hittable)) continue;
 
             hitThisSwing.Add(hittable);
-            hittable.OnSwordHit(this);
+            bool counted = hittable.OnSwordHit(this);
 
-            // Havada bir şeye vurmak atılmayı yeniler (vuruş başına bir kez yeterli)
-            if (!motor.IsGrounded && !dashRefreshedThisSwing)
+            // Havada gerçek bir isabet atılmayı yeniler (vuruş başına bir kez yeterli)
+            if (counted && !motor.IsGrounded && !dashRefreshedThisSwing)
             {
                 dash.RefreshAirDash();
                 dashRefreshedThisSwing = true;
