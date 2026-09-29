@@ -22,6 +22,12 @@ public class SlingAbility : MonoBehaviour
     [Tooltip("Aynı alana fırlatmadan sonra tekrar girememe süresi (gerçek zaman, sn).")]
     [SerializeField] private float reentryCooldown = 0.5f;
 
+    [Tooltip("DENEME: açıksa oyuncu sapan alanına girince alanın ortasına çekilir. Kapatınca girdiği yerde durur.")]
+    [SerializeField] private bool snapToZoneCenter = true;
+
+    [Tooltip("DENEME: ortaya kayma yumuşaklığı (gerçek zaman, sn). Büyük = daha yavaş ve yumuşak. 0 = anında.")]
+    [SerializeField] private float snapSmoothTime = 0.08f;
+
     // Sapan başladı/bitti (ok görseli buna bağlı)
     public event Action<bool> SlingActiveChanged;
     // Nişan yönü (normalize, XY düzleminde, öndeki 180°)
@@ -124,8 +130,20 @@ public class SlingAbility : MonoBehaviour
             return;
         }
 
-        // Nişan alırken karakter havada sabit
-        motor.SetVelocity(Vector3.zero);
+        if (snapToZoneCenter)
+        {
+            // Her adımda kalan mesafenin bir kısmı kadar ortaya kayar (üstel yumuşama).
+            // Oran gerçek zamana göre hesaplanır; zaman yavaşken de kayma süresi aynı hissettirir.
+            Vector3 center = currentZone.transform.position;
+            center.z = 0f;
+            float fraction = snapSmoothTime > 0f ? 1f - Mathf.Exp(-baseFixedDeltaTime / snapSmoothTime) : 1f;
+            motor.SetVelocity((center - motor.Position) * fraction / Time.fixedDeltaTime);
+        }
+        else
+        {
+            // Nişan alırken karakter havada sabit
+            motor.SetVelocity(Vector3.zero);
+        }
     }
 
     private void UpdateAim()
