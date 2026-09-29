@@ -23,6 +23,11 @@ public class PlayerInputReader : MonoBehaviour
     public bool JetBagHeld => jetBagAction.IsPressed();
     public bool HookHeld => hookAction.IsPressed();
 
+    // Ekrandaki tuş ipuçları için güncel tuş adları (oyuncu Ayarlar'dan değiştirebilir)
+    public string JumpKeyName => jumpAction.GetBindingDisplayString(0);
+    public string BalanceLeftKeyName => balanceAction.GetBindingDisplayString(KeyRebinder.BindingIndex(balanceAction, "negative"));
+    public string BalanceRightKeyName => balanceAction.GetBindingDisplayString(KeyRebinder.BindingIndex(balanceAction, "positive"));
+
     private InputActionMap playerMap;
     private InputAction jumpAction;
     private InputAction dashAction;

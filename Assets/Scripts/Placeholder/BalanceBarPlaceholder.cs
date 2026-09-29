@@ -80,6 +80,12 @@ public class BalanceBarPlaceholder : MonoBehaviour
 
     private void OnRidingChanged(bool riding)
     {
+        if (riding)
+        {
+            // Tuş ataması değişmiş olabilir; harfler her sürüşte güncel atamadan alınır
+            leftKey.text = input.BalanceLeftKeyName;
+            rightKey.text = input.BalanceRightKeyName;
+        }
         barRoot.SetActive(riding);
     }
 

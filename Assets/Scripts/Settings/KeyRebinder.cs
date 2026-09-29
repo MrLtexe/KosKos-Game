@@ -120,7 +120,8 @@ public static class KeyRebinder
         return false;
     }
 
-    private static int BindingIndex(InputAction action, string part)
+    // Bileşik parçanın (ör. "negative") atama sırası; part null ise ilk atama
+    public static int BindingIndex(InputAction action, string part)
     {
         if (part == null) return 0;
         for (int i = 0; i < action.bindings.Count; i++)

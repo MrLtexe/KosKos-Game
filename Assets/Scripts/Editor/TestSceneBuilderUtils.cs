@@ -221,7 +221,7 @@ public static class TestSceneBuilderUtils
         barRoot.SetActive(false);
     }
 
-    // GEÇİCİ sapan oku ve "Space: fırlat" ipucu
+    // GEÇİCİ sapan oku ve fırlatma tuşu ipucu (yazısı oyunda güncel zıplama tuşuyla değişir)
     private static void BuildSlingArrow(GameObject player)
     {
         var arrowObject = new GameObject("SlingArrow");
@@ -229,7 +229,7 @@ public static class TestSceneBuilderUtils
         var line = arrowObject.AddComponent<LineRenderer>();
         line.enabled = false;
 
-        TextMesh hint = Text(player.transform, "SlingHint", "Space: fırlat", new Vector3(0f, 1.8f, -0.6f));
+        TextMesh hint = Text(player.transform, "SlingHint", "Space: launch", new Vector3(0f, 1.8f, -0.6f));
         hint.gameObject.SetActive(false);
 
         var view = player.AddComponent<SlingArrowPlaceholder>();
