@@ -5,12 +5,23 @@ using UnityEngine;
 [RequireComponent(typeof(EnemyBody), typeof(LeadAim))]
 public class EnemyShooter : MonoBehaviour
 {
+    // Lead: oyuncunun anlık hızıyla hedef önü (zıplama/atılma nişanı oynatır).
+    // RunPath: oyuncu düz koşmaya devam ederse olacağı yere nişan (zıplamayı yok sayar; çizgi sakin kayar, tepki gerekir)
+    public enum AimMode { Lead, RunPath }
+
+    [Header("Nişan")]
+    [Tooltip("Lead = anlık hıza göre hedef önü. RunPath = oyuncunun koşu yoluna nişan; oyuncu bir şey yapmazsa vurulur (tavan silahı).")]
+    [SerializeField] private AimMode aimMode = AimMode.Lead;
+
+    [Tooltip("RunPath: nişan noktasının yeni hedefe kayma yumuşaklığı (sn). Büyük = daha sakin çizgi.")]
+    [SerializeField] private float aimSmoothTime = 0.08f;
+
     [Header("Menzil")]
     [Tooltip("Oyuncu bu mesafeye girince nişan almaya başlar (birim).")]
     [SerializeField] private float range = 18f;
 
     [Tooltip("Oyuncu düşmanı bu kadar geçtikten sonra ateş kesilir (birim). Arkadan vurulmayı engeller.")]
-    [SerializeField] private float passTolerance = 0.5f;
+    [SerializeField] private float passTolerance = 0.3f;
 
     [Header("Zamanlama")]
     [Tooltip("Nişan alma (uyarı çizgisi) süresi (sn).")]
@@ -49,7 +60,15 @@ public class EnemyShooter : MonoBehaviour
 
     private State state = State.Idle;
     private float stateStartTime;
+
+    // Oyuncuyu gördü ve atış döngüsünde (nişan veya soğuma); devriye dronları bu sürede yerinde durur
+    public bool IsEngaged => state != State.Idle;
     private Vector3 aimDirection = Vector3.left;
+
+    // RunPath: yumuşatılmış nişan noktası ve oyuncunun en son yerde koştuğu yükseklik
+    private Vector3 aimPoint;
+    private Vector3 aimPointVelocity;
+    private float lastGroundY;
 
     private EnemyBody body;
     private LeadAim aim;
@@ -77,6 +96,7 @@ public class EnemyShooter : MonoBehaviour
         }
         playerDeath = player.GetComponent<PlayerDeath>();
         playerDeath.Died += OnPlayerDied;
+        lastGroundY = player.Position.y;
     }
 
     private void OnDestroy()
@@ -98,26 +118,41 @@ public class EnemyShooter : MonoBehaviour
     {
         if (body.IsDead || playerDeath.IsDead) return;
 
+        // Koşu yolu nişanı için: zıplarken değil, yerdeyken koşulan yükseklik
+        if (player.IsGrounded) lastGroundY = player.Position.y;
+
         float elapsed = Time.time - stateStartTime;
         switch (state)
         {
             case State.Idle:
-                if (PlayerInRange()) Enter(State.WindUp);
+                if (PlayerInRange())
+                {
+                    Enter(State.WindUp);
+                    // Çizgi eski bir noktadan kaymaya başlamasın: ilk karede hedefe otur
+                    aimPoint = RunPathTarget(windUpTime);
+                    aimPointVelocity = Vector3.zero;
+                }
                 break;
 
             case State.WindUp:
-                if (!PlayerInRange())
+                // Nişan başladıysa atış her zaman yapılır (oyuncu menzilden çıksa bile): uyarı çizgisi hiç boşa çıkmaz
+                if (elapsed < windUpTime - aimLockTime)
                 {
-                    ResetCycle();
-                }
-                else if (elapsed < windUpTime - aimLockTime)
-                {
-                    // Nişan serbest: her karede hedef önü yeniden hesaplanır.
-                    // Hedef, atış anındaki tahmini konum (kalan nişan süresi kadar ileri); yoksa kilit süresi kadar geride kalır
+                    // Nişan serbest: her karede yeniden hesaplanır
                     float timeUntilFire = windUpTime - elapsed;
-                    Vector3 targetAtFire = player.transform.position + player.Velocity * timeUntilFire;
-                    aimDirection = aim.GetAimDirection(muzzle.position, targetAtFire, player.Velocity, bulletSpeed);
-                    telegraph.Show(muzzle.position, aimDirection, false);
+                    if (aimMode == AimMode.RunPath)
+                    {
+                        aimPoint = Vector3.SmoothDamp(aimPoint, RunPathTarget(timeUntilFire), ref aimPointVelocity, aimSmoothTime);
+                        aimDirection = (aimPoint - muzzle.position).normalized;
+                        telegraph.Show(muzzle.position, aimDirection, false);
+                    }
+                    else
+                    {
+                        // Hedef, atış anındaki tahmini konum (kalan nişan süresi kadar ileri); yoksa kilit süresi kadar geride kalır
+                        Vector3 targetAtFire = player.transform.position + player.Velocity * timeUntilFire;
+                        aimDirection = aim.GetAimDirection(muzzle.position, targetAtFire, player.Velocity, bulletSpeed);
+                        telegraph.Show(muzzle.position, aimDirection, false);
+                    }
                 }
                 else if (elapsed < windUpTime)
                 {
@@ -136,6 +171,29 @@ public class EnemyShooter : MonoBehaviour
                 if (elapsed >= cooldownTime) Enter(State.Idle);
                 break;
         }
+    }
+
+    // Oyuncu düz koşmaya devam ederse merminin onunla buluşacağı nokta (yükseklik = son yerde koşulan yükseklik)
+    private Vector3 RunPathTarget(float timeUntilFire)
+    {
+        Vector3 start = player.Position;
+        Vector3 target = new Vector3(start.x + player.CurrentSpeed * timeUntilFire, lastGroundY, 0f);
+        // Mermi uçuş süresi hedefin uzaklığına bağlı; iki adımda yeterince yakınsar
+        for (int i = 0; i < 2; i++)
+        {
+            float travelTime = Vector3.Distance(muzzle.position, target) / bulletSpeed;
+            target.x = start.x + player.CurrentSpeed * (timeUntilFire + travelTime);
+        }
+        return target;
+    }
+
+    // Menzil/geçiş kontrolü olmadan hemen nişan alıp ateş eder (ör. kovalayan devriye dronunun son atışı)
+    public void ForceShot()
+    {
+        if (player == null || body.IsDead || playerDeath.IsDead || state == State.WindUp) return;
+        Enter(State.WindUp);
+        aimPoint = RunPathTarget(windUpTime);
+        aimPointVelocity = Vector3.zero;
     }
 
     private bool PlayerInRange()

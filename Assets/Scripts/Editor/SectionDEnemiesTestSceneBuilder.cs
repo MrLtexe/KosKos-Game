@@ -18,6 +18,9 @@ public static class SectionDEnemiesTestSceneBuilder
     private static readonly Color TurretBulletColor = new Color(1f, 0.9f, 0.1f);
     private static readonly Color DroneBulletColor = new Color(0.55f, 0.2f, 1f);
 
+    // Dronun en düşük yüksekliği: süzülmede alçalsa bile yerdeki oyuncunun (tepesi y=2) üstünde kalır
+    private const float MinDroneHeight = 4.5f;
+
     // Diğer builder'lar (prototip bölümler) için hazır mermi prefab'ları
     internal static Bullet TurretBullet(U.Layers layers) =>
         GetOrCreateBulletPrefab(TurretBulletPath, layers, true, Bullet.DodgeRule.AnyDash, TurretBulletColor);
@@ -44,11 +47,12 @@ public static class SectionDEnemiesTestSceneBuilder
         Turret(level, layers, "Turret_Dodge", 30f, turretBullet);
         Turret(level, layers, "Turret_Parry", 60f, turretBullet);
 
-        // Dronlar: alçak (kılıçla öldür), yüksek (havada vur → atılma yenilenir), yüksek (sıyrılganlık ile kaç)
-        Drone(level, layers, "Drone_Low", 100f, 1.5f, droneBullet, 5f);
-        Drone(level, layers, "Drone_High", 120f, 4f, droneBullet, 5f);
+        // Dronlar havada: altından geçilebilir; zıplayıp kılıçla vur (atılma yenilenir) ya da sıyrılganlık ile mermilerden kaç
+        Drone(level, layers, "Drone_Hover", 100f, 4.5f, droneBullet, 10f);
+        // Devriye: 115 ile 125 arasında gidip gelir
+        Drone(level, layers, "Drone_Patrol", 115f, 5f, droneBullet, 10f, 10f);
         // Uzun menzil: mermiler oyuncuya önden gelir, böylece atılma ile içlerinden geçmek denenebilir
-        Drone(level, layers, "Drone_Phase", 160f, 4.5f, droneBullet, 12f);
+        Drone(level, layers, "Drone_Phase", 160f, 5f, droneBullet, 12f);
 
         GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
         U.AddFollowCamera(player);
@@ -69,25 +73,44 @@ public static class SectionDEnemiesTestSceneBuilder
         turret.GetComponent<Collider>().isTrigger = true;
         U.Colorize(turret, TurretColor);
 
-        SetupEnemy(turret, bulletPrefab, false, new Vector3(0f, -0.6f, 0f),
-            18f, 0.6f, 1.5f, 1, 0f, 14f);
+        EnemyShooter shooter = SetupEnemy(turret, bulletPrefab, false, new Vector3(0f, -0.6f, 0f),
+            18f, 0.4f, 1.5f, 1, 0f, 20f);
+        // Koşu yoluna nişan: çizgi sakin kayar, kilitlenince oyuncu tepki vermezse vurulur
+        U.SetEnum(shooter, "aimMode", (int)EnemyShooter.AimMode.RunPath);
+        U.SetFloat(shooter, "aimLockTime", 0.2f);
+        // Oyuncu altından geçtikten sonra da kısa bir süre ateş eder
+        U.SetFloat(shooter, "passTolerance", 4f);
     }
 
-    internal static void Drone(Transform parent, U.Layers layers, string name, float x, float y, Bullet bulletPrefab, float range)
+    // Dronlar havadadır: yerdeki oyuncu altından her zaman geçebilir (en düşük yükseklik zorlanır).
+    // patrolX: 0 = yerinde süzülür, aksi halde x ile x + patrolX arasında devriye gezer.
+    internal static void Drone(Transform parent, U.Layers layers, string name, float x, float y, Bullet bulletPrefab, float range,
+        float patrolX = 0f)
     {
         GameObject drone = GameObject.CreatePrimitive(PrimitiveType.Sphere);
         drone.name = name;
         drone.layer = layers.Enemy;
         drone.transform.SetParent(parent);
-        drone.transform.position = new Vector3(x, y, 0f);
+        drone.transform.position = new Vector3(x, Mathf.Max(y, MinDroneHeight), 0f);
         drone.GetComponent<Collider>().isTrigger = true;
         U.Colorize(drone, DroneColor);
 
-        SetupEnemy(drone, bulletPrefab, true, Vector3.zero,
-            range, 0.4f, 2f, 3, 8f, 10f);
+        EnemyShooter shooter = SetupEnemy(drone, bulletPrefab, true, Vector3.zero,
+            range, 0.4f, 2f, 3, 5f, 14f);
+        // Tavan silahı gibi koşu yoluna nişan: çizgi sakin kayar
+        U.SetEnum(shooter, "aimMode", (int)EnemyShooter.AimMode.RunPath);
+        U.SetFloat(shooter, "aimLockTime", 0.2f);
+
+        var hover = drone.AddComponent<DroneHover>();
+        if (patrolX != 0f)
+        {
+            var so = new SerializedObject(hover);
+            so.FindProperty("patrolOffset").vector3Value = new Vector3(patrolX, 0f, 0f);
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
     }
 
-    private static void SetupEnemy(GameObject enemy, Bullet bulletPrefab, bool swordCanKill, Vector3 muzzleLocal,
+    private static EnemyShooter SetupEnemy(GameObject enemy, Bullet bulletPrefab, bool swordCanKill, Vector3 muzzleLocal,
         float range, float windUp, float cooldown, int bulletsPerShot, float spread, float bulletSpeed)
     {
         var body = enemy.AddComponent<EnemyBody>();
@@ -112,6 +135,7 @@ public static class SectionDEnemiesTestSceneBuilder
         U.SetField(shooter, "bulletPrefab", bulletPrefab);
         U.SetField(shooter, "muzzle", muzzle);
         U.SetField(shooter, "telegraph", telegraph);
+        return shooter;
     }
 
     // Mermi prefab'ı varsa onu kullanır (ayarlar korunur), yoksa oluşturur

@@ -173,10 +173,11 @@ public static class PrototypeLevelsBuilder
 
         U.SafeZoneAt(p, "SafeZone_4", 180f, false);
         Bullet droneBullet = DE.DroneBullet(l);
-        DE.Drone(p, l, "Drone_Low", 192f, 1.5f, droneBullet, 5f);
-        DE.Drone(p, l, "Drone_High", 205f, 4f, droneBullet, 5f);
+        DE.Drone(p, l, "Drone_Hover", 192f, 4.5f, droneBullet, 10f);
+        // Devriye: 200 ile 208 arasında gidip gelir
+        DE.Drone(p, l, "Drone_Patrol", 200f, 5f, droneBullet, 10f, 8f);
         Kumas(p, id, 5, new Vector3(212f, 1.2f, 0f));
-        DE.Drone(p, l, "Drone_Phase", 228f, 4.5f, droneBullet, 12f);
+        DE.Drone(p, l, "Drone_Phase", 228f, 5f, droneBullet, 12f);
 
         GoalAt(p, 242f);
         U.KillZone(p, 120f, 400f);
@@ -228,7 +229,7 @@ public static class PrototypeLevelsBuilder
         U.Ground(p, g, "Ground_F", 260f, 310f);
         U.SafeZoneAt(p, "SafeZone_6", 268f, false);
         B.BreakableBlock(p, g, "Breakable_Final", 280f, 0f, 1f, 2f);
-        DE.Drone(p, l, "Drone_Final", 292f, 1.5f, DE.DroneBullet(l), 5f);
+        DE.Drone(p, l, "Drone_Final", 292f, 4.5f, DE.DroneBullet(l), 10f);
         GoalAt(p, 302f);
         U.KillZone(p, 150f, 420f);
     }

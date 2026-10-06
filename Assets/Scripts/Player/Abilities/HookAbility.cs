@@ -31,13 +31,16 @@ public class HookAbility : MonoBehaviour
     [SerializeField] private float swingGravity = 40f;
 
     [Header("Çekilme")]
-    [Tooltip("Noktaya doğru çekilme hızı (birim/sn).")]
-    [SerializeField] private float pullSpeed = 22f;
+    [Tooltip("Çekilme hızı (birim/sn).")]
+    [SerializeField] private float pullSpeed = 35f;
 
-    [Tooltip("Çekilme bitince verilen ileri hız (birim/sn).")]
+    [Tooltip("Çekilme noktayı bu kadar geçince biter (birim). Oyuncu noktada durmaz, ilerisine çekilir.")]
+    [SerializeField] private float pullOvershoot = 3f;
+
+    [Tooltip("Çekilme bitince verilen ileri hız (birim/sn). 8 = normal koşu hızı (boost yok).")]
     [SerializeField] private float pullExitSpeed = 8f;
 
-    [Tooltip("Noktaya bu kadar yaklaşınca çekilme biter (birim).")]
+    [Tooltip("Çekilmenin bitiş noktasına bu kadar yaklaşınca çekilme biter (birim).")]
     [SerializeField] private float pullArriveDistance = 0.5f;
 
     // Kanca açık mı? Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
@@ -213,12 +216,14 @@ public class HookAbility : MonoBehaviour
 
     private void StepPull(float dt)
     {
-        Vector3 toPoint = anchor - motor.Position;
-        toPoint.z = 0f;
-        float distance = toPoint.magnitude;
+        // Bitiş noktası: kanca noktasının biraz ilerisi (oyuncu noktada durmaz, ileri çekilir)
+        Vector3 end = anchor + Vector3.right * pullOvershoot;
+        Vector3 toEnd = end - motor.Position;
+        toEnd.z = 0f;
+        float distance = toEnd.magnitude;
 
-        // Noktaya vardıysa ya da hizasına geldiyse biter (nokta zeminin içine denk gelse bile takılı kalmaz)
-        bool arrived = distance <= pullArriveDistance || toPoint.x <= pullArriveDistance;
+        // Bitişe vardıysa ya da hizasına geldiyse biter (bitiş zeminin içine denk gelse bile takılı kalmaz)
+        bool arrived = distance <= pullArriveDistance || toEnd.x <= pullArriveDistance;
         if (releaseRequested || arrived)
         {
             EndHook();
@@ -226,9 +231,9 @@ public class HookAbility : MonoBehaviour
             return;
         }
 
-        // Son adımda noktayı geçmesin
+        // Son adımda bitişi geçmesin
         float speed = Mathf.Min(pullSpeed, distance / dt);
-        motor.SetVelocity(toPoint / distance * speed);
+        motor.SetVelocity(toEnd / distance * speed);
     }
 
     // İpe teğet birim yön (açı artınca gidilen yön)

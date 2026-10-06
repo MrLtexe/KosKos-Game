@@ -1514,8 +1514,6 @@ MonoBehaviour:
   maxRopeLength: 7
   releaseBoost: 1.15
   swingGravity: 40
-  pullSpeed: 22
-  pullExitSpeed: 8
   pullArriveDistance: 0.5
 --- !u!114 &5622051878394532230
 MonoBehaviour:
