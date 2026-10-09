@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// GEÇİCİ ana menü: Oyna (bölüm seçimi), Mağaza, Belgeler, Ayarlar, Çıkış.
+// GEÇİCİ ana menü: Oyna (bölüm seçimi), Mağaza, Belgeler, Ayarlar, Yapımcılar, Çıkış.
 // Tüm ekranlar oyun çalışırken kodla oluşturulur; MainMenu sahnesinde bu bileşeni taşıyan tek bir nesne yeterli.
 public class MainMenu : MonoBehaviour
 {
@@ -69,12 +69,19 @@ public class MainMenu : MonoBehaviour
         UiKit.Clear(content);
         RectTransform list = UiKit.VerticalList(content, 14f);
         UiKit.Line(list, "KOŞKOŞ", 96);
-        Button play = UiKit.Button(list, "Play", ShowLevels);
-        UiKit.Button(list, "Shop", ShowShop);
-        UiKit.Button(list, "Documents", ShowLore);
-        UiKit.Button(list, "Settings", ShowSettings);
-        UiKit.Button(list, "Quit", Quit);
+        Button play = UiKit.Button(list, Loc.Get("menu.play"), ShowLevels);
+        UiKit.Button(list, Loc.Get("menu.shop"), ShowShop);
+        UiKit.Button(list, Loc.Get("menu.documents"), ShowLore);
+        UiKit.Button(list, Loc.Get("menu.settings"), ShowSettings);
+        UiKit.Button(list, Loc.Get("menu.credits"), ShowCredits);
+        UiKit.Button(list, Loc.Get("menu.quit"), Quit);
         UiKit.Select(play);
+    }
+
+    private void ShowCredits()
+    {
+        UiKit.Clear(content);
+        CreditsView.Build(content, ShowRoot);
     }
 
     private void ShowLevels()

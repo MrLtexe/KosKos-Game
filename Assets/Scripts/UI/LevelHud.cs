@@ -46,7 +46,8 @@ public class LevelHud : MonoBehaviour
         shownDeaths = run.Deaths;
         shownKumas = kumas;
         shownBelge = belge;
-        label.text = $"{FormatTime(run.Elapsed)}\nDeaths: {run.Deaths}\nFabric: {kumas}/{run.KumasTotal}\nDocument: {belge}/{run.BelgeTotal}";
+        label.text = $"{FormatTime(run.Elapsed)}\n{Loc.Format("hud.deaths", run.Deaths)}\n" +
+                     $"{Loc.Format("hud.fabric", kumas, run.KumasTotal)}\n{Loc.Format("hud.document", belge, run.BelgeTotal)}";
     }
 
     public static string FormatTime(float seconds)

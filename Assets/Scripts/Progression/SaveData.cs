@@ -37,4 +37,6 @@ public class SettingsData
     public int qualityLevel = -1;
     // Input System'in SaveBindingOverridesAsJson çıktısı
     public string bindingOverrides = "";
+    // Language enum değeri; -1 = henüz seçilmedi (bilgisayarın diline göre başlar)
+    public int language = -1;
 }

@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 // GEÇİCİ ayarlar ekranı (ana menü ve duraklatma menüsü ortak kullanır):
-// ses, tam ekran, grafik kalitesi, tuş atamaları, ilerlemeyi sıfırlama.
+// dil, ses, tam ekran, grafik kalitesi, tuş atamaları, ilerlemeyi sıfırlama.
 public static class SettingsView
 {
     // Ayarlar listesi uzun; ekrana sığsın diye butonlar daha alçak
@@ -13,10 +13,19 @@ public static class SettingsView
     public static void Build(Transform parent, InputActionAsset asset, UnityAction onBack)
     {
         RectTransform list = UiKit.VerticalList(parent, 6f);
-        UiKit.Line(list, "Settings", 48);
+        UiKit.Line(list, Loc.Get("settings.title"), 48);
 
-        UiKit.Line(list, "Volume", 26);
-        Slider volume = UiKit.Slider(list, GameSettings.Data.masterVolume, GameSettings.SetVolume);
+        // Dil değişince ekran yeni dille baştan çizilir
+        Button language = UiKit.Button(list, Loc.Get("settings.language"), () =>
+        {
+            int next = ((int)GameSettings.Language + 1) % System.Enum.GetValues(typeof(Language)).Length;
+            GameSettings.SetLanguage((Language)next);
+            UiKit.Clear(parent);
+            Build(parent, asset, onBack);
+        }, RowHeight);
+
+        UiKit.Line(list, Loc.Get("settings.volume"), 26);
+        UiKit.Slider(list, GameSettings.Data.masterVolume, GameSettings.SetVolume);
 
         Button fullscreen = UiKit.Button(list, FullscreenText(), null, RowHeight);
         fullscreen.onClick.AddListener(() =>
@@ -32,12 +41,12 @@ public static class SettingsView
             UiKit.ButtonLabel(quality).text = QualityText();
         });
 
-        UiKit.Line(list, "Controls", 30);
+        UiKit.Line(list, Loc.Get("settings.controls"), 30);
         // Çakışma gibi mesajlar tuş listesinin altında görünür
         Text message = null;
         if (asset == null)
         {
-            UiKit.Line(list, "No Input Actions assigned.", 24);
+            UiKit.Line(list, Loc.Get("settings.noActions"), 24);
         }
         else
         {
@@ -48,7 +57,7 @@ public static class SettingsView
                 key.onClick.AddListener(() =>
                 {
                     if (KeyRebinder.IsRebinding) return;
-                    UiKit.ButtonLabel(key).text = $"{e.Label}: press a key...  (Esc: cancel)";
+                    UiKit.ButtonLabel(key).text = Loc.Format("settings.pressKey", e.Label);
                     message.text = "";
                     KeyRebinder.Start(asset, e, error =>
                     {
@@ -58,7 +67,7 @@ public static class SettingsView
                 });
             }
 
-            UiKit.Button(list, "Reset controls to default", () =>
+            UiKit.Button(list, Loc.Get("settings.resetControls"), () =>
             {
                 GameSettings.ResetBindings(asset);
                 UiKit.Clear(parent);
@@ -70,27 +79,28 @@ public static class SettingsView
 
         // İlerlemeyi sıfırlama iki tıklama ister (yanlışlıkla silinmesin)
         bool confirming = false;
-        Button reset = UiKit.Button(list, "Reset progress", null, RowHeight);
+        Button reset = UiKit.Button(list, Loc.Get("settings.resetProgress"), null, RowHeight);
         reset.onClick.AddListener(() =>
         {
             if (!confirming)
             {
                 confirming = true;
-                UiKit.ButtonLabel(reset).text = "Are you sure? Click again to reset progress";
+                UiKit.ButtonLabel(reset).text = Loc.Get("settings.resetConfirm");
                 return;
             }
             confirming = false;
             GameProgress.ResetAll();
-            UiKit.ButtonLabel(reset).text = "Progress reset";
+            UiKit.ButtonLabel(reset).text = Loc.Get("settings.resetDone");
         });
 
-        UiKit.Button(list, "Back", onBack, RowHeight);
-        UiKit.Select(volume);
+        UiKit.Button(list, Loc.Get("common.back"), onBack, RowHeight);
+        UiKit.Select(language);
     }
 
-    private static string FullscreenText() => $"Fullscreen: {(GameSettings.Data.fullscreen ? "On" : "Off")}";
+    private static string FullscreenText() =>
+        Loc.Format("settings.fullscreen", Loc.Get(GameSettings.Data.fullscreen ? "common.on" : "common.off"));
 
-    private static string QualityText() => $"Graphics: {QualitySettings.names[QualitySettings.GetQualityLevel()]}";
+    private static string QualityText() => Loc.Format("settings.graphics", QualitySettings.names[QualitySettings.GetQualityLevel()]);
 
     private static string KeyText(InputActionAsset asset, KeyRebinder.Entry entry) => $"{entry.Label}: {KeyRebinder.DisplayName(asset, entry)}";
 }

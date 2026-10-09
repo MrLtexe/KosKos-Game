@@ -25,6 +25,27 @@ public class LevelCatalog : ScriptableObject
         [Tooltip("Bu bölümün Belgesi toplandığında Belgeler ekranında görünen metin.")]
         [TextArea(2, 6)]
         public string belgeText;
+
+        [Header("Türkçe")]
+        [Tooltip("Menüde görünen bölüm adı (Türkçe). Boşsa İngilizce ad gösterilir.")]
+        public string displayNameTr;
+
+        [Tooltip("Belge başlığı (Türkçe). Boşsa İngilizce başlık gösterilir.")]
+        public string belgeTitleTr;
+
+        [Tooltip("Belge metni (Türkçe). Boşsa İngilizce metin gösterilir.")]
+        [TextArea(2, 6)]
+        public string belgeTextTr;
+
+        // Seçili dildeki metinler (Türkçe boşsa İngilizce)
+        public string DisplayName => Pick(displayName, displayNameTr);
+        public string BelgeTitle => Pick(belgeTitle, belgeTitleTr);
+        public string BelgeText => Pick(belgeText, belgeTextTr);
+
+        private static string Pick(string english, string turkish)
+        {
+            return Loc.Current == Language.Turkish && !string.IsNullOrEmpty(turkish) ? turkish : english;
+        }
     }
 
     [Tooltip("Bölümler, oynanma sırasıyla.")]

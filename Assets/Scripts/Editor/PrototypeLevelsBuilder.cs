@@ -27,6 +27,8 @@ public static class PrototypeLevelsBuilder
     private struct LevelDef
     {
         public string id, displayName, sceneName, belgeTitle, belgeText;
+        // Türkçe metinler (menü dil seçimine göre gösterilir)
+        public string displayNameTr, belgeTitleTr, belgeTextTr;
         public float silver, gold;
         public bool doubleJump, phase, parry, hook, jetBag, magBoots;
         public System.Action<Transform, U.Layers, string> build;
@@ -38,12 +40,16 @@ public static class PrototypeLevelsBuilder
         {
             id = "L1", displayName = "Escape", sceneName = "Level_01", silver = 50f, gold = 38f,
             belgeTitle = "Document 1: The Dome", belgeText = "PLACEHOLDER: The company has claimed the last forests outside the dome cities.",
+            displayNameTr = "Kaçış", belgeTitleTr = "Belge 1: Kubbe",
+            belgeTextTr = "GEÇİCİ METİN: Şirket, kubbe şehirlerin dışındaki son ormanları kendi zimmetine geçirdi.",
             build = BuildLevel1
         },
         new LevelDef
         {
             id = "L2", displayName = "Above the City", sceneName = "Level_02", silver = 55f, gold = 42f,
             belgeTitle = "Document 2: The Virus", belgeText = "PLACEHOLDER: The virus implanted in captured activists activates the moment they stop.",
+            displayNameTr = "Şehir Üstü", belgeTitleTr = "Belge 2: Virüs",
+            belgeTextTr = "GEÇİCİ METİN: Yakalanan aktivistlere eklenen virüs, durdukları anda harekete geçiyor.",
             doubleJump = true, phase = true, parry = true,
             build = BuildLevel2
         },
@@ -51,6 +57,8 @@ public static class PrototypeLevelsBuilder
         {
             id = "L3", displayName = "The Tower", sceneName = "Level_03", silver = 70f, gold = 52f,
             belgeTitle = "Document 3: The Tower", belgeText = "PLACEHOLDER: The last piece of the documents is hidden in the company's tower.",
+            displayNameTr = "Kule", belgeTitleTr = "Belge 3: Kule",
+            belgeTextTr = "GEÇİCİ METİN: Dokümanların son parçası şirketin kulesinde saklanıyor.",
             doubleJump = true, phase = true, parry = true, hook = true, jetBag = true, magBoots = true,
             build = BuildLevel3
         }
@@ -323,6 +331,9 @@ public static class PrototypeLevelsBuilder
             e.FindPropertyRelative("sceneName").stringValue = levels[i].sceneName;
             e.FindPropertyRelative("belgeTitle").stringValue = levels[i].belgeTitle;
             e.FindPropertyRelative("belgeText").stringValue = levels[i].belgeText;
+            e.FindPropertyRelative("displayNameTr").stringValue = levels[i].displayNameTr;
+            e.FindPropertyRelative("belgeTitleTr").stringValue = levels[i].belgeTitleTr;
+            e.FindPropertyRelative("belgeTextTr").stringValue = levels[i].belgeTextTr;
         }
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(catalog);

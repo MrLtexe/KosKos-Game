@@ -61,6 +61,23 @@ public static class GameSettings
         File.WriteAllText(FilePath, JsonUtility.ToJson(Data, true));
     }
 
+    // Seçili dil; hiç seçilmediyse bilgisayarın dili Türkçeyse Türkçe, değilse İngilizce
+    public static Language Language
+    {
+        get
+        {
+            int saved = Data.language;
+            if (saved >= 0 && saved < System.Enum.GetValues(typeof(Language)).Length) return (Language)saved;
+            return Application.systemLanguage == SystemLanguage.Turkish ? Language.Turkish : Language.English;
+        }
+    }
+
+    public static void SetLanguage(Language language)
+    {
+        Data.language = (int)language;
+        Save();
+    }
+
     public static void SetVolume(float volume)
     {
         Data.masterVolume = Mathf.Clamp01(volume);

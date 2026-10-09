@@ -66,11 +66,11 @@ public class PauseMenu : MonoBehaviour
     {
         UiKit.Clear(panel);
         RectTransform list = UiKit.VerticalList(panel, 12f);
-        UiKit.Line(list, "Paused", 56);
-        Button resume = UiKit.Button(list, "Resume", Close);
-        UiKit.Button(list, "Restart level", SceneFlow.ReloadCurrent);
-        UiKit.Button(list, "Settings", ShowSettings);
-        UiKit.Button(list, "Main menu", SceneFlow.LoadMenu);
+        UiKit.Line(list, Loc.Get("pause.title"), 56);
+        Button resume = UiKit.Button(list, Loc.Get("pause.resume"), Close);
+        UiKit.Button(list, Loc.Get("pause.restart"), SceneFlow.ReloadCurrent);
+        UiKit.Button(list, Loc.Get("menu.settings"), ShowSettings);
+        UiKit.Button(list, Loc.Get("pause.mainMenu"), SceneFlow.LoadMenu);
         UiKit.Select(resume);
     }
 

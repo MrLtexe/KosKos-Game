@@ -8,8 +8,8 @@ public static class ShopView
     public static void Build(Transform parent, UnityAction onBack)
     {
         RectTransform list = UiKit.VerticalList(parent, 10f);
-        UiKit.Line(list, "Shop", 56);
-        UiKit.Line(list, $"Fabric: {GameProgress.Data.kumasBalance}", 34);
+        UiKit.Line(list, Loc.Get("shop.title"), 56);
+        UiKit.Line(list, Loc.Format("shop.balance", GameProgress.Data.kumasBalance), 34);
 
         Selectable first = null;
         string equipped = GameProgress.EquippedCostumeId;
@@ -17,7 +17,9 @@ public static class ShopView
         {
             bool owned = GameProgress.OwnsCostume(costume.Id);
             bool isEquipped = costume.Id == equipped;
-            string status = isEquipped ? "Equipped" : owned ? "Equip" : $"Buy ({costume.Price} Fabric)";
+            string status = isEquipped ? Loc.Get("shop.equipped")
+                : owned ? Loc.Get("shop.equip")
+                : Loc.Format("shop.buy", costume.Price);
 
             Costume c = costume;
             Button button = UiKit.Button(list, $"{costume.Name}   -   {status}", () =>
@@ -30,7 +32,7 @@ public static class ShopView
             if (button.interactable && first == null) first = button;
         }
 
-        Button back = UiKit.Button(list, "Back", onBack);
+        Button back = UiKit.Button(list, Loc.Get("common.back"), onBack);
         UiKit.Select(first != null ? first : back);
     }
 

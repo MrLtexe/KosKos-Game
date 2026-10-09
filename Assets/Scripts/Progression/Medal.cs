@@ -24,9 +24,9 @@ public static class MedalRule
     {
         switch (medal)
         {
-            case Medal.Gold: return "Gold";
-            case Medal.Silver: return "Silver";
-            case Medal.Bronze: return "Bronze";
+            case Medal.Gold: return Loc.Get("medal.gold");
+            case Medal.Silver: return Loc.Get("medal.silver");
+            case Medal.Bronze: return Loc.Get("medal.bronze");
             default: return "—";
         }
     }

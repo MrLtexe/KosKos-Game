@@ -76,7 +76,7 @@ public class SlingArrowPlaceholder : MonoBehaviour
     private void SetVisible(bool visible)
     {
         // Tuş ataması değişmiş olabilir; ipucu her sapanda güncel zıplama tuşunu gösterir
-        if (visible && hintText != null) hintText.text = $"{input.JumpKeyName}: launch";
+        if (visible && hintText != null) hintText.text = Loc.Format("hint.launch", input.JumpKeyName);
         arrow.enabled = visible;
         hint.SetActive(visible);
     }

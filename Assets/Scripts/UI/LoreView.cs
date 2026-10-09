@@ -8,11 +8,11 @@ public static class LoreView
     public static void Build(Transform parent, LevelCatalog catalog, UnityAction onBack)
     {
         RectTransform list = UiKit.VerticalList(parent, 10f);
-        UiKit.Line(list, "Documents", 56);
+        UiKit.Line(list, Loc.Get("lore.title"), 56);
 
         if (catalog == null)
         {
-            UiKit.Line(list, "No level catalog assigned.", 28);
+            UiKit.Line(list, Loc.Get("levels.noCatalog"), 28);
         }
         else
         {
@@ -23,8 +23,8 @@ public static class LoreView
                 bool found = GameProgress.IsCollected(entry.id, $"{entry.id}{GameProgress.BelgeTag}1");
                 if (found)
                 {
-                    UiKit.Line(list, entry.belgeTitle, 34);
-                    UiKit.Paragraph(list, entry.belgeText, 26);
+                    UiKit.Line(list, entry.BelgeTitle, 34);
+                    UiKit.Paragraph(list, entry.BelgeText, 26);
                 }
                 else
                 {
@@ -33,7 +33,7 @@ public static class LoreView
             }
         }
 
-        Button back = UiKit.Button(list, "Back", onBack);
+        Button back = UiKit.Button(list, Loc.Get("common.back"), onBack);
         UiKit.Select(back);
     }
 }

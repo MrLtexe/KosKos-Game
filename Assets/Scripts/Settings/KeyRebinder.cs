@@ -8,30 +8,34 @@ public static class KeyRebinder
 {
     public readonly struct Entry
     {
-        public readonly string Label;
+        // Ekranda görünen adın çeviri anahtarı (Loc)
+        public readonly string LabelKey;
         public readonly string Action;
         // Bileşik eylemin parçası (ör. Balance "negative"); null = eylemin ilk ataması
         public readonly string Part;
 
-        public Entry(string label, string action, string part = null)
+        public Entry(string labelKey, string action, string part = null)
         {
-            Label = label;
+            LabelKey = labelKey;
             Action = action;
             Part = part;
         }
+
+        // Seçili dildeki adı
+        public string Label => Loc.Get(LabelKey);
     }
 
     public static readonly Entry[] Rebindables =
     {
-        new Entry("Jump", "Jump"),
-        new Entry("Dash", "Dash"),
-        new Entry("Sword", "Sword"),
-        new Entry("Boost Charge", "BoostCharge"),
-        new Entry("Hook", "Hook"),
-        new Entry("Jet-Bag", "JetBag"),
-        new Entry("Magnetic Boots", "MagBoots"),
-        new Entry("Balance Left", "Balance", "negative"),
-        new Entry("Balance Right", "Balance", "positive")
+        new Entry("action.jump", "Jump"),
+        new Entry("action.dash", "Dash"),
+        new Entry("action.sword", "Sword"),
+        new Entry("action.boost", "BoostCharge"),
+        new Entry("action.hook", "Hook"),
+        new Entry("action.jetBag", "JetBag"),
+        new Entry("action.magBoots", "MagBoots"),
+        new Entry("action.balanceLeft", "Balance", "negative"),
+        new Entry("action.balanceRight", "Balance", "positive")
     };
 
     // Esc hem atamayı iptal eder hem de duraklatma tuşudur; iptalden hemen sonra duraklatma tetiklenmesin (sn)
@@ -96,7 +100,7 @@ public static class KeyRebinder
                 // Çakışma: eski atamaya geri dön
                 if (string.IsNullOrEmpty(previousOverride)) action.RemoveBindingOverride(index);
                 else action.ApplyBindingOverride(index, previousOverride);
-                message = "This key is already in use";
+                message = Loc.Get("settings.keyInUse");
             }
             else
             {
