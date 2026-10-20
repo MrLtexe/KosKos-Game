@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AbilityLoadout
   doubleJump: 0
   phase: 0
-  parry: 1
+  parry: 0
   hook: 0
   jetBag: 0
   magBoots: 0

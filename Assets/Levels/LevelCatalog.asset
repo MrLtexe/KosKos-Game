@@ -19,15 +19,27 @@ MonoBehaviour:
     belgeTitle: 'Document 1: The Dome'
     belgeText: 'PLACEHOLDER: The company has claimed the last forests outside the
       dome cities.'
+    displayNameTr: "Ka\xE7\u0131\u015F"
+    belgeTitleTr: 'Belge 1: Kubbe'
+    belgeTextTr: "GE\xC7\u0130C\u0130 MET\u0130N: \u015Eirket, kubbe \u015Fehirlerin
+      d\u0131\u015F\u0131ndaki son ormanlar\u0131 kendi zimmetine ge\xE7irdi."
   - id: L2
     displayName: Above the City
     sceneName: Level_02
     belgeTitle: 'Document 2: The Virus'
     belgeText: 'PLACEHOLDER: The virus implanted in captured activists activates
       the moment they stop.'
+    displayNameTr: "\u015Eehir \xDCst\xFC"
+    belgeTitleTr: "Belge 2: Vir\xFCs"
+    belgeTextTr: "GE\xC7\u0130C\u0130 MET\u0130N: Yakalanan aktivistlere eklenen
+      vir\xFCs, durduklar\u0131 anda harekete ge\xE7iyor."
   - id: L3
     displayName: The Tower
     sceneName: Level_03
     belgeTitle: 'Document 3: The Tower'
     belgeText: 'PLACEHOLDER: The last piece of the documents is hidden in the company''s
       tower.'
+    displayNameTr: Kule
+    belgeTitleTr: 'Belge 3: Kule'
+    belgeTextTr: "GE\xC7\u0130C\u0130 MET\u0130N: Dok\xFCmanlar\u0131n son par\xE7as\u0131
+      \u015Firketin kulesinde saklan\u0131yor."

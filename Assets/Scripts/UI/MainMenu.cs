@@ -68,7 +68,7 @@ public class MainMenu : MonoBehaviour
     {
         UiKit.Clear(content);
         RectTransform list = UiKit.VerticalList(content, 14f);
-        UiKit.Line(list, "KOŞKOŞ", 96);
+        UiKit.Line(list, "Strider Bound", 96);
         Button play = UiKit.Button(list, Loc.Get("menu.play"), ShowLevels);
         UiKit.Button(list, Loc.Get("menu.shop"), ShowShop);
         UiKit.Button(list, Loc.Get("menu.documents"), ShowLore);
