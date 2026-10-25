@@ -1,11 +1,11 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
-// GEÇİCİ yapımcılar ekranı: ekip üyeleri ve rolleri (roller seçili dilde).
-// Düzen: başlık, altında her satırda solda rol (sağa yaslı, küçük, soluk), sağda isim (sola yaslı, büyük).
+// Yapımcılar paneli: ekip üyeleri ve rolleri (roller seçili dilde).
+// Satır şablonunda "Role" (solda, sağa yaslı) ve "Name" (sağda) adlı iki yazı olmalı; görünüm MainMenuUI prefab'ında düzenlenir.
 // Ekibe kişi eklemek/rol değiştirmek için Team listesini düzenleyin; yeni rol için Loc tablosuna "role.*" anahtarı ekleyin.
-public static class CreditsView
+public class CreditsView : MonoBehaviour
 {
     private readonly struct Member
     {
@@ -29,60 +29,24 @@ public static class CreditsView
         new Member("Egecan Çınar", "role.director", "role.gameDesigner", "role.narrativeDesigner")
     };
 
-    // Uzun rol listeleri tek satıra sığsın diye liste diğer ekranlardan geniş
-    private const float ListWidth = 1500f;
-    private const float RowHeight = 76f;
-    private const float ColumnGap = 80f;
-    private const int RoleSize = 28;
-    private const int NameSize = 40;
-    private static readonly Color RoleColor = new Color(0.8f, 0.82f, 0.85f);
+    [Tooltip("Yapımcı satırlarının listesi (şablonda 'Role' ve 'Name' adlı iki TextMeshPro yazısı olmalı).")]
+    [SerializeField] private UiRowList rows;
 
-    public static void Build(Transform parent, UnityAction onBack)
+    [Tooltip("Geri butonu (ana menüye döner).")]
+    [SerializeField] private Button backButton;
+
+    public Button BackButton => backButton;
+
+    public Selectable Open()
     {
-        RectTransform list = UiKit.VerticalList(parent, 4f);
-        list.sizeDelta = new Vector2(ListWidth, 0f);
-
-        // Başlıktan sonra küçük bir boşluk
-        UiKit.Line(list, Loc.Get("credits.title"), 56);
-        UiKit.Line(list, "", 12);
-
+        rows.Clear();
         foreach (Member member in Team)
         {
-            Row(list, RolesText(member), member.Name);
+            GameObject row = rows.Add();
+            row.transform.Find("Role").GetComponent<TMP_Text>().text = RolesText(member);
+            row.transform.Find("Name").GetComponent<TMP_Text>().text = member.Name;
         }
-
-        UiKit.Line(list, "", 12);
-        Button back = UiKit.Button(list, Loc.Get("common.back"), onBack);
-        UiKit.Select(back);
-    }
-
-    // Tek satır: solda rol, sağda isim; iki sütun eşit genişlikte, ortada boşluk
-    private static void Row(Transform parent, string role, string name)
-    {
-        var go = new GameObject("CreditRow", typeof(RectTransform));
-        go.transform.SetParent(parent, false);
-        go.AddComponent<LayoutElement>().preferredHeight = RowHeight;
-
-        var layout = go.AddComponent<HorizontalLayoutGroup>();
-        layout.spacing = ColumnGap;
-        layout.childControlWidth = true;
-        layout.childControlHeight = true;
-        layout.childForceExpandWidth = true;
-        layout.childForceExpandHeight = true;
-
-        Text roleLabel = UiKit.Label(go.transform, role, RoleSize, TextAnchor.MiddleRight);
-        roleLabel.color = RoleColor;
-        EqualColumn(roleLabel);
-        EqualColumn(UiKit.Label(go.transform, name, NameSize, TextAnchor.MiddleLeft));
-    }
-
-    // Sütun genişliği yazının uzunluğuna göre değil, eşit paylaşılır (ortadaki boşluk hep ekranın ortasında kalır)
-    private static void EqualColumn(Text label)
-    {
-        var element = label.gameObject.AddComponent<LayoutElement>();
-        element.minWidth = 0f;
-        element.preferredWidth = 0f;
-        element.flexibleWidth = 1f;
+        return backButton;
     }
 
     private static string RolesText(Member member)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -13,6 +14,21 @@ public enum Language
 public static class Loc
 {
     public static Language Current => GameSettings.Language;
+
+    // Dil değişti: ekrandaki metinler (LocalizedText ve kodla doldurulan yazılar) kendini yeniler
+    public static event Action LanguageChanged;
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        LanguageChanged = null;
+    }
+
+    // GameSettings.SetLanguage çağırır
+    public static void NotifyLanguageChanged()
+    {
+        LanguageChanged?.Invoke();
+    }
 
     // Biçimli metinler: {0}, {1} ... yerine Format ile değer konur
     private static readonly Dictionary<string, string[]> Table = new Dictionary<string, string[]>

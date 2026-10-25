@@ -1,8 +1,9 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Bölüm arayüzünün kökü: Canvas'ı oluşturur ve gösterge, duraklatma ve sonuç ekranlarını ekler.
-// Bölüm sahnelerinde "LevelUI" nesnesinde durur (prototip bölüm builder'ı ekler).
+// Bölüm arayüzünün kökü (LevelUI prefab'ı): gösterge, duraklatma ve sonuç ekranı bu nesnededir.
+// Düzen ve görünüm Assets/Prefabs/UI/LevelUI.prefab içinde düzenlenir; değişiklik tüm bölümlere yansır.
+[RequireComponent(typeof(LevelHud), typeof(PauseMenu), typeof(ResultsScreen))]
 public class LevelUI : MonoBehaviour
 {
     [Tooltip("Oyuncu kontrollerini içeren Input Actions dosyası (KosKosControls). Duraklatma ve tuş ayarları için.")]
@@ -11,11 +12,6 @@ public class LevelUI : MonoBehaviour
     private void Awake()
     {
         UiKit.EnsureEventSystem();
-        Canvas canvas = UiKit.CreateCanvas("LevelCanvas", 10);
-        canvas.transform.SetParent(transform, false);
-
-        gameObject.AddComponent<LevelHud>().Init(canvas);
-        gameObject.AddComponent<ResultsScreen>().Init(canvas);
-        gameObject.AddComponent<PauseMenu>().Init(canvas, actions);
+        GetComponent<PauseMenu>().Init(actions);
     }
 }

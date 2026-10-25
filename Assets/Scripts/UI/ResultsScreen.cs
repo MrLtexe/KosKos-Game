@@ -1,15 +1,45 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-// GEÇİCİ bölüm sonu ekranı: süre, ölüm, toplanabilirler, madalya, rekorlar ve devam butonları.
+// Bölüm sonu ekranı (LevelUI prefab'ının kökünde durur): süre, ölüm, toplanabilirler, madalya, rekorlar ve devam butonları.
+// Düzen ve görünüm prefab'da düzenlenir; bu kod sadece yazıları doldurur ve butonları bağlar.
 public class ResultsScreen : MonoBehaviour
 {
-    private Canvas canvas;
+    [Tooltip("Sonuç paneli (bölüm bitince görünür).")]
+    [SerializeField] private GameObject panel;
+
+    [Tooltip("Süre yazısı.")]
+    [SerializeField] private TMP_Text timeText;
+
+    [Tooltip("Ölüm yazısı.")]
+    [SerializeField] private TMP_Text deathsText;
+
+    [Tooltip("Kumaş/Belge sayıları yazısı.")]
+    [SerializeField] private TMP_Text collectiblesText;
+
+    [Tooltip("Madalya yazısı.")]
+    [SerializeField] private TMP_Text medalText;
+
+    [Tooltip("Ek bilgi yazısı (+Kumaş veya 'kaydedilmedi'); gerekmezse gizlenir.")]
+    [SerializeField] private TMP_Text extraText;
+
+    [Tooltip("Sonraki bölüm butonu (son bölümde gizlenir).")]
+    [SerializeField] private Button nextButton;
+
+    [Tooltip("Tekrar oyna butonu.")]
+    [SerializeField] private Button replayButton;
+
+    [Tooltip("Ana menü butonu.")]
+    [SerializeField] private Button mainMenuButton;
+
     private LevelRun run;
 
-    public void Init(Canvas targetCanvas)
+    private void Awake()
     {
-        canvas = targetCanvas;
+        replayButton.onClick.AddListener(SceneFlow.ReloadCurrent);
+        mainMenuButton.onClick.AddListener(SceneFlow.LoadMenu);
+        panel.SetActive(false);
     }
 
     private void Start()
@@ -25,29 +55,30 @@ public class ResultsScreen : MonoBehaviour
 
     private void Show(RunSummary s)
     {
-        RectTransform panel = UiKit.Panel(canvas.transform, UiKit.PanelColor, Vector2.zero, Vector2.one);
-        RectTransform list = UiKit.VerticalList(panel, 10f);
+        panel.SetActive(true);
 
-        UiKit.Line(list, Loc.Get("results.title"), 56);
-        UiKit.Line(list, Loc.Format("results.time", LevelHud.FormatTime(s.time)) + NewRecord(s.result.newBestTime), 32);
-        UiKit.Line(list, Loc.Format("hud.deaths", s.deaths) + NewRecord(s.result.newBestDeaths), 32);
-        UiKit.Line(list, Loc.Format("results.collectibles", s.kumas, s.kumasTotal, s.belge, s.belgeTotal), 32);
-        UiKit.Line(list, Loc.Format("results.medal", MedalRule.DisplayName(s.medal)) + NewRecord(s.result.newMedal), 40);
+        timeText.text = Loc.Format("results.time", LevelHud.FormatTime(s.time)) + NewRecord(s.result.newBestTime);
+        deathsText.text = Loc.Format("hud.deaths", s.deaths) + NewRecord(s.result.newBestDeaths);
+        collectiblesText.text = Loc.Format("results.collectibles", s.kumas, s.kumasTotal, s.belge, s.belgeTotal);
+        medalText.text = Loc.Format("results.medal", MedalRule.DisplayName(s.medal)) + NewRecord(s.result.newMedal);
 
-        if (!s.saved) UiKit.Line(list, Loc.Get("results.notSaved"), 24);
-        else if (s.result.kumasGained > 0) UiKit.Line(list, Loc.Format("results.fabricGained", s.result.kumasGained), 30);
+        string extra = !s.saved ? Loc.Get("results.notSaved")
+            : s.result.kumasGained > 0 ? Loc.Format("results.fabricGained", s.result.kumasGained)
+            : "";
+        extraText.text = extra;
+        extraText.gameObject.SetActive(extra.Length > 0);
 
-        Button first = null;
-        if (s.nextLevelIndex >= 0)
+        bool hasNext = s.nextLevelIndex >= 0;
+        nextButton.gameObject.SetActive(hasNext);
+        nextButton.onClick.RemoveAllListeners();
+        if (hasNext)
         {
             LevelCatalog catalog = s.catalog;
             int next = s.nextLevelIndex;
-            first = UiKit.Button(list, Loc.Get("results.next"), () => SceneFlow.LoadLevel(catalog, next));
+            nextButton.onClick.AddListener(() => SceneFlow.LoadLevel(catalog, next));
         }
-        Button replay = UiKit.Button(list, Loc.Get("results.replay"), SceneFlow.ReloadCurrent);
-        UiKit.Button(list, Loc.Get("pause.mainMenu"), SceneFlow.LoadMenu);
 
-        UiKit.Select(first != null ? first : replay);
+        UiKit.Select(hasNext ? nextButton : replayButton);
     }
 
     private static string NewRecord(bool isNew) => isNew ? Loc.Get("results.newRecord") : "";

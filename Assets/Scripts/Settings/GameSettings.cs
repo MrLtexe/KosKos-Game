@@ -76,6 +76,7 @@ public static class GameSettings
     {
         Data.language = (int)language;
         Save();
+        Loc.NotifyLanguageChanged();
     }
 
     public static void SetVolume(float volume)

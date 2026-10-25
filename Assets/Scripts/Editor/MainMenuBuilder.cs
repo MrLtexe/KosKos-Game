@@ -1,12 +1,10 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
-using U = TestSceneBuilderUtils;
 
 // Tek tıkla ana menü sahnesini üretir: KosKos > Build Main Menu.
-// Menü ekranları oyun çalışırken kodla oluşturulur; sahnede sadece MainMenu nesnesi vardır.
+// Sahneye MainMenuUI prefab'ı konur (prefab yoksa önce üretilir); menünün düzeni prefab'da düzenlenir, sahne yeniden üretilse de korunur.
 public static class MainMenuBuilder
 {
     [MenuItem("KosKos/Build Main Menu")]
@@ -15,13 +13,10 @@ public static class MainMenuBuilder
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
 
         Scene scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
-        // Asset'ler yeni sahne açıldıktan sonra yüklenir (açılışta bellekten atılmasınlar)
-        LevelCatalog catalog = PrototypeLevelsBuilder.GetOrCreateCatalog();
-        var actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(U.InputAssetPath);
-
-        var menu = new GameObject("MainMenu").AddComponent<MainMenu>();
-        U.SetField(menu, "catalog", catalog);
-        U.SetField(menu, "actions", actions);
+        // Prefab'lar yeni sahne açıldıktan sonra üretilir/yüklenir
+        UiPrefabBuilder.EnsurePrefabs();
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(UiPrefabBuilder.MainMenuPath);
+        PrefabUtility.InstantiatePrefab(prefab, scene);
 
         EditorSceneManager.SaveScene(scene, PrototypeLevelsBuilder.MenuScenePath);
         Debug.Log($"[KosKos] Ana menü oluşturuldu: {PrototypeLevelsBuilder.MenuScenePath}");

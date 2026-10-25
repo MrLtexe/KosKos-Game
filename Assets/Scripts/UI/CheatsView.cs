@@ -1,16 +1,18 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
 // Test hileleri (ana menüdeki hamburger butonu): Kumaş ekle, bölümleri/kostümleri/Belgeleri aç, kaydı sıfırla.
 // Sadece Editor'da ve development build'lerde görünür (MainMenu kontrol eder).
+// Geliştirici aracı olduğu için prefab değil, kodla kurulur ve İngilizce kalır.
 public static class CheatsView
 {
     public static void Build(Transform parent, LevelCatalog catalog, UnityAction onBack)
     {
         RectTransform list = UiKit.VerticalList(parent, 10f);
         UiKit.Line(list, "Cheats", 56);
-        Text status = UiKit.Line(list, $"Fabric: {GameProgress.Data.kumasBalance}", 30);
+        TMP_Text status = UiKit.Line(list, $"Fabric: {GameProgress.Data.kumasBalance}", 30);
 
         Button first = UiKit.Button(list, "+10 Fabric", () => AddFabric(10, status));
         UiKit.Button(list, "+100 Fabric", () => AddFabric(100, status));
@@ -57,7 +59,7 @@ public static class CheatsView
         UiKit.Select(first);
     }
 
-    private static void AddFabric(int amount, Text status)
+    private static void AddFabric(int amount, TMP_Text status)
     {
         GameProgress.Data.kumasBalance += amount;
         GameProgress.Save();

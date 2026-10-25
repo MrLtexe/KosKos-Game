@@ -102,8 +102,9 @@ public static class PrototypeLevelsBuilder
         GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
         U.AddFollowCamera(player);
 
-        var ui = new GameObject("LevelUI").AddComponent<LevelUI>();
-        U.SetField(ui, "actions", actions);
+        // Bölüm arayüzü: LevelUI prefab'ı (yoksa önce üretilir); düzeni prefab'da düzenlenir, tüm bölümlere yansır
+        UiPrefabBuilder.EnsurePrefabs();
+        PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(UiPrefabBuilder.LevelUiPath), scene);
 
         U.SaveScene(scene, $"Assets/Scenes/{def.sceneName}.unity");
         return true;

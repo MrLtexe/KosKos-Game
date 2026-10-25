@@ -1,53 +1,81 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
-// GEÇİCİ bölüm içi gösterge (sol üst): süre, ölüm sayısı, Kumaş ve Belge sayıları.
+// Bölüm içi gösterge (LevelUI prefab'ı, sol üst): süre, ölüm sayısı, Kumaş ve Belge sayıları.
+// Düzen ve görünüm prefab'da düzenlenir; bu kod sadece yazıları doldurur.
 public class LevelHud : MonoBehaviour
 {
-    private Text label;
-    private RectTransform root;
-    // Son gösterilen değerler: yazı sadece değişince yeniden oluşturulur (her karede dize üretilmesin)
+    [Tooltip("Göstergenin kök nesnesi (bölüm bitince gizlenir).")]
+    [SerializeField] private GameObject root;
+
+    [Tooltip("Süre yazısı.")]
+    [SerializeField] private TMP_Text timeText;
+
+    [Tooltip("Ölüm sayısı yazısı.")]
+    [SerializeField] private TMP_Text deathsText;
+
+    [Tooltip("Kumaş sayısı yazısı.")]
+    [SerializeField] private TMP_Text fabricText;
+
+    [Tooltip("Belge sayısı yazısı.")]
+    [SerializeField] private TMP_Text documentText;
+
+    // Son gösterilen değerler: yazılar sadece değişince yeniden oluşturulur (her karede dize üretilmesin)
     private int shownTenths = -1;
     private int shownDeaths = -1;
     private int shownKumas = -1;
     private int shownBelge = -1;
 
-    public void Init(Canvas canvas)
+    private void OnEnable()
     {
-        root = UiKit.Panel(canvas.transform, new Color(0f, 0f, 0f, 0.45f), new Vector2(0f, 1f), new Vector2(0f, 1f));
-        root.pivot = new Vector2(0f, 1f);
-        root.anchoredPosition = new Vector2(20f, -20f);
-        root.sizeDelta = new Vector2(330f, 170f);
+        Loc.LanguageChanged += ForceRefresh;
+    }
 
-        label = UiKit.Label(root, "", 30, TextAnchor.UpperLeft);
-        var rect = (RectTransform)label.transform;
-        UiKit.Stretch(rect);
-        rect.offsetMin = new Vector2(16f, 10f);
-        rect.offsetMax = new Vector2(-16f, -10f);
+    private void OnDisable()
+    {
+        Loc.LanguageChanged -= ForceRefresh;
+    }
+
+    // Dil değişince bir sonraki karede tüm yazılar yeniden yazılır
+    private void ForceRefresh()
+    {
+        shownTenths = shownDeaths = shownKumas = shownBelge = -1;
     }
 
     private void Update()
     {
         LevelRun run = LevelRun.Current;
-        if (run == null || label == null) return;
+        if (run == null) return;
 
         if (run.IsFinished)
         {
-            root.gameObject.SetActive(false);
+            if (root.activeSelf) root.SetActive(false);
             return;
         }
 
         int tenths = (int)(run.Elapsed * 10f);
+        if (tenths != shownTenths)
+        {
+            shownTenths = tenths;
+            timeText.text = FormatTime(run.Elapsed);
+        }
+        if (run.Deaths != shownDeaths)
+        {
+            shownDeaths = run.Deaths;
+            deathsText.text = Loc.Format("hud.deaths", run.Deaths);
+        }
         int kumas = run.KumasCount;
+        if (kumas != shownKumas)
+        {
+            shownKumas = kumas;
+            fabricText.text = Loc.Format("hud.fabric", kumas, run.KumasTotal);
+        }
         int belge = run.BelgeCount;
-        if (tenths == shownTenths && run.Deaths == shownDeaths && kumas == shownKumas && belge == shownBelge) return;
-
-        shownTenths = tenths;
-        shownDeaths = run.Deaths;
-        shownKumas = kumas;
-        shownBelge = belge;
-        label.text = $"{FormatTime(run.Elapsed)}\n{Loc.Format("hud.deaths", run.Deaths)}\n" +
-                     $"{Loc.Format("hud.fabric", kumas, run.KumasTotal)}\n{Loc.Format("hud.document", belge, run.BelgeTotal)}";
+        if (belge != shownBelge)
+        {
+            shownBelge = belge;
+            documentText.text = Loc.Format("hud.document", belge, run.BelgeTotal);
+        }
     }
 
     public static string FormatTime(float seconds)

@@ -2,22 +2,51 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// GEÇİCİ duraklatma menüsü (Esc): zaman durur, oyuncu kontrolleri kapanır.
-// Kapatınca zaman ölçeği duraklatmadan önceki değerine döner (sapan yavaşlaması sırasında duraklatılırsa yavaş devam eder).
+// Duraklatma menüsü (Esc; LevelUI prefab'ının kökünde durur, panel kapalıyken de Esc'i dinler).
+// Zaman durur, oyuncu kontrolleri kapanır. Kapatınca zaman ölçeği duraklatmadan önceki değerine döner
+// (sapan yavaşlaması sırasında duraklatılırsa yavaş devam eder). Düzen ve görünüm prefab'da düzenlenir.
 public class PauseMenu : MonoBehaviour
 {
-    private Canvas canvas;
+    [Tooltip("Duraklatma paneli (açılınca görünür).")]
+    [SerializeField] private GameObject panel;
+
+    [Tooltip("Duraklatma butonlarının grubu (ayarlar açılınca gizlenir).")]
+    [SerializeField] private GameObject mainGroup;
+
+    [Tooltip("Ayarlar paneli (SettingsPanel prefab'ı).")]
+    [SerializeField] private SettingsView settings;
+
+    [Tooltip("Devam butonu.")]
+    [SerializeField] private Button resumeButton;
+
+    [Tooltip("Bölümü yeniden başlat butonu.")]
+    [SerializeField] private Button restartButton;
+
+    [Tooltip("Ayarlar butonu.")]
+    [SerializeField] private Button settingsButton;
+
+    [Tooltip("Ana menü butonu.")]
+    [SerializeField] private Button mainMenuButton;
+
     private InputActionAsset actions;
     private InputAction pauseAction;
     private PlayerInputReader reader;
-    private RectTransform panel;
     private float previousTimeScale = 1f;
 
-    public bool IsOpen => panel != null;
+    public bool IsOpen => panel.activeSelf;
 
-    public void Init(Canvas targetCanvas, InputActionAsset actionsAsset)
+    private void Awake()
     {
-        canvas = targetCanvas;
+        resumeButton.onClick.AddListener(Close);
+        restartButton.onClick.AddListener(SceneFlow.ReloadCurrent);
+        settingsButton.onClick.AddListener(ShowSettings);
+        mainMenuButton.onClick.AddListener(SceneFlow.LoadMenu);
+        panel.SetActive(false);
+    }
+
+    // LevelUI çağırır
+    public void Init(InputActionAsset actionsAsset)
+    {
         actions = actionsAsset;
         if (actions == null)
         {
@@ -58,33 +87,28 @@ public class PauseMenu : MonoBehaviour
         if (LevelRun.Current != null) LevelRun.Current.Paused = true;
         if (reader != null) reader.enabled = false;
 
-        panel = UiKit.Panel(canvas.transform, UiKit.PanelColor, Vector2.zero, Vector2.one);
+        panel.SetActive(true);
         ShowMain();
     }
 
     private void ShowMain()
     {
-        UiKit.Clear(panel);
-        RectTransform list = UiKit.VerticalList(panel, 12f);
-        UiKit.Line(list, Loc.Get("pause.title"), 56);
-        Button resume = UiKit.Button(list, Loc.Get("pause.resume"), Close);
-        UiKit.Button(list, Loc.Get("pause.restart"), SceneFlow.ReloadCurrent);
-        UiKit.Button(list, Loc.Get("menu.settings"), ShowSettings);
-        UiKit.Button(list, Loc.Get("pause.mainMenu"), SceneFlow.LoadMenu);
-        UiKit.Select(resume);
+        mainGroup.SetActive(true);
+        settings.gameObject.SetActive(false);
+        UiKit.Select(resumeButton);
     }
 
     private void ShowSettings()
     {
-        UiKit.Clear(panel);
-        SettingsView.Build(panel, actions, ShowMain);
+        mainGroup.SetActive(false);
+        settings.gameObject.SetActive(true);
+        UiKit.Select(settings.Open(actions, ShowMain));
     }
 
     private void Close()
     {
         if (!IsOpen) return;
-        Destroy(panel.gameObject);
-        panel = null;
+        panel.SetActive(false);
 
         Time.timeScale = previousTimeScale;
         if (LevelRun.Current != null) LevelRun.Current.Paused = false;

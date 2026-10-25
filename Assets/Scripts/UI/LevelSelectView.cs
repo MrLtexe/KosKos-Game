@@ -1,37 +1,47 @@
+using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.UI;
 
-// GEÇİCİ bölüm seçim ekranı (A.1): açık bölümler rekorlarıyla, kilitli bölümler gri.
-public static class LevelSelectView
+// Bölüm seçim paneli (A.1): açık bölümler rekorlarıyla, kilitli bölümler gri.
+// Satırlar şablondan kopyalanır (şablon = yazılı bir buton); düzen ve görünüm MainMenuUI prefab'ında düzenlenir.
+public class LevelSelectView : MonoBehaviour
 {
-    public static void Build(Transform parent, LevelCatalog catalog, UnityAction onBack)
-    {
-        RectTransform list = UiKit.VerticalList(parent, 10f);
-        UiKit.Line(list, Loc.Get("levels.title"), 56);
+    [Tooltip("Bölüm satırlarının listesi (şablonu yazılı bir buton).")]
+    [SerializeField] private UiRowList rows;
 
+    [Tooltip("Geri butonu (ana menüye döner).")]
+    [SerializeField] private Button backButton;
+
+    public Button BackButton => backButton;
+
+    // Listeyi doldurur; klavye seçiminin başlayacağı butonu döndürür
+    public Selectable Open(LevelCatalog catalog)
+    {
+        rows.Clear();
         Selectable first = null;
         if (catalog == null)
         {
-            UiKit.Line(list, Loc.Get("levels.noCatalog"), 28);
+            Debug.LogWarning("[KosKos] MainMenuUI'da bölüm kataloğu atanmamış.");
+            return backButton;
         }
-        else
+
+        for (int i = 0; i < catalog.Entries.Count; i++)
         {
-            for (int i = 0; i < catalog.Entries.Count; i++)
-            {
-                LevelCatalog.Entry entry = catalog.Entries[i];
-                bool unlocked = GameProgress.IsUnlocked(catalog, i);
-                int index = i;
+            LevelCatalog.Entry entry = catalog.Entries[i];
+            bool unlocked = GameProgress.IsUnlocked(catalog, i);
+            int index = i;
 
-                Button button = UiKit.Button(list, unlocked ? UnlockedText(entry, i) : $"{Loc.Get("levels.locked")}  {i + 1}. {entry.DisplayName}",
-                    () => SceneFlow.LoadLevel(catalog, index));
-                button.interactable = unlocked;
-                if (unlocked && first == null) first = button;
-            }
+            GameObject row = rows.Add();
+            var button = row.GetComponent<Button>();
+            row.GetComponentInChildren<TMP_Text>(true).text = unlocked
+                ? UnlockedText(entry, i)
+                : $"{Loc.Get("levels.locked")}  {i + 1}. {entry.DisplayName}";
+            button.interactable = unlocked;
+            button.onClick.AddListener(() => SceneFlow.LoadLevel(catalog, index));
+            if (unlocked && first == null) first = button;
         }
 
-        Button back = UiKit.Button(list, Loc.Get("common.back"), onBack);
-        UiKit.Select(first != null ? first : back);
+        return first != null ? first : backButton;
     }
 
     private static string UnlockedText(LevelCatalog.Entry entry, int index)

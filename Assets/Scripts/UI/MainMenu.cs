@@ -1,20 +1,66 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
-// GEÇİCİ ana menü: Oyna (bölüm seçimi), Mağaza, Belgeler, Ayarlar, Yapımcılar, Çıkış.
-// Tüm ekranlar oyun çalışırken kodla oluşturulur; MainMenu sahnesinde bu bileşeni taşıyan tek bir nesne yeterli.
+// Ana menü (MainMenuUI prefab'ının kökü): Oyna (bölüm seçimi), Mağaza, Belgeler, Ayarlar, Yapımcılar, Çıkış.
+// Ekranlar prefab'da hazır panellerdir; bu kod sadece paneller arasında geçiş yapar ve butonları bağlar.
+// Düzen ve görünüm Assets/Prefabs/UI/MainMenuUI.prefab içinde düzenlenir.
 public class MainMenu : MonoBehaviour
 {
+    [Header("Veri")]
     [Tooltip("Bölüm listesi (Assets/Levels/LevelCatalog).")]
     [SerializeField] private LevelCatalog catalog;
 
     [Tooltip("Oyuncu kontrollerini içeren Input Actions dosyası (KosKosControls). Tuş ayarları için.")]
     [SerializeField] private InputActionAsset actions;
 
-    private static readonly Color BackgroundColor = new Color(0.08f, 0.1f, 0.12f, 1f);
+    [Header("Paneller")]
+    [Tooltip("Ana butonların bulunduğu panel.")]
+    [SerializeField] private GameObject rootPanel;
 
-    private RectTransform content;
+    [Tooltip("Bölüm seçim paneli.")]
+    [SerializeField] private LevelSelectView levelSelect;
+
+    [Tooltip("Mağaza paneli.")]
+    [SerializeField] private ShopView shop;
+
+    [Tooltip("Belgeler paneli.")]
+    [SerializeField] private LoreView documents;
+
+    [Tooltip("Yapımcılar paneli.")]
+    [SerializeField] private CreditsView credits;
+
+    [Tooltip("Ayarlar paneli (SettingsPanel prefab'ı).")]
+    [SerializeField] private SettingsView settings;
+
+    [Tooltip("Hile panelinin kodla kurulacağı boş kap (sadece Editor/development build).")]
+    [SerializeField] private RectTransform cheatsPanel;
+
+    [Header("Ana Butonlar")]
+    [Tooltip("Oyna butonu.")]
+    [SerializeField] private Button playButton;
+
+    [Tooltip("Mağaza butonu.")]
+    [SerializeField] private Button shopButton;
+
+    [Tooltip("Belgeler butonu.")]
+    [SerializeField] private Button documentsButton;
+
+    [Tooltip("Ayarlar butonu.")]
+    [SerializeField] private Button settingsButton;
+
+    [Tooltip("Yapımcılar butonu.")]
+    [SerializeField] private Button creditsButton;
+
+    [Tooltip("Çıkış butonu.")]
+    [SerializeField] private Button quitButton;
+
+    [Tooltip("Sol üstteki hile (hamburger) butonu; release build'de gizlenir.")]
+    [SerializeField] private Button cheatsButton;
+
+    [Tooltip("Başlık yazısı. Kodla kurulan hile paneli bu yazının yazı tipini kullanır.")]
+    [SerializeField] private TMP_Text titleText;
 
     private void Awake()
     {
@@ -23,83 +69,83 @@ public class MainMenu : MonoBehaviour
         UiKit.EnsureEventSystem();
         // Ayarlar ekranı kayıtlı tuşları göstersin
         GameSettings.ApplyBindings(actions);
+        if (titleText != null) UiKit.Font = titleText.font;
 
-        Canvas canvas = UiKit.CreateCanvas("MenuCanvas", 0);
-        canvas.transform.SetParent(transform, false);
-        content = UiKit.Panel(canvas.transform, BackgroundColor, Vector2.zero, Vector2.one);
-        ShowRoot();
+        playButton.onClick.AddListener(ShowLevels);
+        shopButton.onClick.AddListener(ShowShop);
+        documentsButton.onClick.AddListener(ShowDocuments);
+        settingsButton.onClick.AddListener(ShowSettings);
+        creditsButton.onClick.AddListener(ShowCredits);
+        quitButton.onClick.AddListener(Quit);
+
+        levelSelect.BackButton.onClick.AddListener(ShowRoot);
+        shop.BackButton.onClick.AddListener(ShowRoot);
+        documents.BackButton.onClick.AddListener(ShowRoot);
+        credits.BackButton.onClick.AddListener(ShowRoot);
 
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         // Test hileleri: sadece Editor ve development build'lerde
-        BuildCheatsButton(canvas.transform);
+        cheatsButton.onClick.AddListener(ShowCheats);
+#else
+        cheatsButton.gameObject.SetActive(false);
 #endif
+
+        ShowRoot();
     }
 
-    // Sol üst köşede üç çizgili (hamburger) buton
-    private void BuildCheatsButton(Transform parent)
+    // Sadece verilen paneli açar
+    private void Show(GameObject panel)
     {
-        Button button = UiKit.Button(parent, "", ShowCheats);
-        var rect = (RectTransform)button.transform;
-        rect.anchorMin = rect.anchorMax = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 1f);
-        rect.anchoredPosition = new Vector2(20f, -20f);
-        rect.sizeDelta = new Vector2(64f, 64f);
-
-        for (int i = 0; i < 3; i++)
-        {
-            RectTransform bar = UiKit.Panel(rect, UiKit.TextColor, new Vector2(0.2f, 0.28f + i * 0.2f), new Vector2(0.8f, 0.32f + i * 0.2f));
-            bar.GetComponent<Image>().raycastTarget = false;
-        }
-    }
-
-    private void ShowSettings()
-    {
-        UiKit.Clear(content);
-        SettingsView.Build(content, actions, ShowRoot);
-    }
-
-    private void ShowCheats()
-    {
-        UiKit.Clear(content);
-        CheatsView.Build(content, catalog, ShowRoot);
+        rootPanel.SetActive(panel == rootPanel);
+        levelSelect.gameObject.SetActive(panel == levelSelect.gameObject);
+        shop.gameObject.SetActive(panel == shop.gameObject);
+        documents.gameObject.SetActive(panel == documents.gameObject);
+        credits.gameObject.SetActive(panel == credits.gameObject);
+        settings.gameObject.SetActive(panel == settings.gameObject);
+        cheatsPanel.gameObject.SetActive(panel == cheatsPanel.gameObject);
     }
 
     private void ShowRoot()
     {
-        UiKit.Clear(content);
-        RectTransform list = UiKit.VerticalList(content, 14f);
-        UiKit.Line(list, "Strider Bound", 96);
-        Button play = UiKit.Button(list, Loc.Get("menu.play"), ShowLevels);
-        UiKit.Button(list, Loc.Get("menu.shop"), ShowShop);
-        UiKit.Button(list, Loc.Get("menu.documents"), ShowLore);
-        UiKit.Button(list, Loc.Get("menu.settings"), ShowSettings);
-        UiKit.Button(list, Loc.Get("menu.credits"), ShowCredits);
-        UiKit.Button(list, Loc.Get("menu.quit"), Quit);
-        UiKit.Select(play);
-    }
-
-    private void ShowCredits()
-    {
-        UiKit.Clear(content);
-        CreditsView.Build(content, ShowRoot);
+        Show(rootPanel);
+        UiKit.Select(playButton);
     }
 
     private void ShowLevels()
     {
-        UiKit.Clear(content);
-        LevelSelectView.Build(content, catalog, ShowRoot);
+        Show(levelSelect.gameObject);
+        UiKit.Select(levelSelect.Open(catalog));
     }
 
     private void ShowShop()
     {
-        UiKit.Clear(content);
-        ShopView.Build(content, ShowRoot);
+        Show(shop.gameObject);
+        UiKit.Select(shop.Open());
     }
 
-    private void ShowLore()
+    private void ShowDocuments()
     {
-        UiKit.Clear(content);
-        LoreView.Build(content, catalog, ShowRoot);
+        Show(documents.gameObject);
+        UiKit.Select(documents.Open(catalog));
+    }
+
+    private void ShowCredits()
+    {
+        Show(credits.gameObject);
+        UiKit.Select(credits.Open());
+    }
+
+    private void ShowSettings()
+    {
+        Show(settings.gameObject);
+        UiKit.Select(settings.Open(actions, ShowRoot));
+    }
+
+    private void ShowCheats()
+    {
+        Show(cheatsPanel.gameObject);
+        UiKit.Clear(cheatsPanel);
+        CheatsView.Build(cheatsPanel, catalog, ShowRoot);
     }
 
     private static void Quit()
