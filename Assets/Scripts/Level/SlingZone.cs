@@ -4,6 +4,11 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 public class SlingZone : MonoBehaviour
 {
+    [Tooltip("İşaretliyse bu alanda oyuncuya nasıl kullanılacağı (fareyle nişan + fırlatma tuşu) uzun ipucuyla anlatılır. Bölümdeki ilk sapan alanı için.")]
+    [SerializeField] private bool showTutorialHint;
+
+    public bool ShowTutorialHint => showTutorialHint;
+
     private void OnTriggerEnter(Collider other) => TryEnter(other);
     private void OnTriggerStay(Collider other) => TryEnter(other);
 

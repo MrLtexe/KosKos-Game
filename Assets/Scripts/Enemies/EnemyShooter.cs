@@ -1,19 +1,13 @@
 using UnityEngine;
 
 // Düşmanın atış döngüsü: Bekle → Nişan (uyarı çizgisi) → Ateş → Soğuma → Bekle.
+// Nişan, oyuncu düz koşmaya devam ederse olacağı yere alınır (zıplamayı yok sayar; çizgi sakin kayar, oyuncu tepki vermezse vurulur).
 // Oyuncuyu sahne başında kendisi bulur; sahneye bırakmak yeterli.
-[RequireComponent(typeof(EnemyBody), typeof(LeadAim))]
+[RequireComponent(typeof(EnemyBody))]
 public class EnemyShooter : MonoBehaviour
 {
-    // Lead: oyuncunun anlık hızıyla hedef önü (zıplama/atılma nişanı oynatır).
-    // RunPath: oyuncu düz koşmaya devam ederse olacağı yere nişan (zıplamayı yok sayar; çizgi sakin kayar, tepki gerekir)
-    public enum AimMode { Lead, RunPath }
-
     [Header("Nişan")]
-    [Tooltip("Lead = anlık hıza göre hedef önü. RunPath = oyuncunun koşu yoluna nişan; oyuncu bir şey yapmazsa vurulur (tavan silahı).")]
-    [SerializeField] private AimMode aimMode = AimMode.Lead;
-
-    [Tooltip("RunPath: nişan noktasının yeni hedefe kayma yumuşaklığı (sn). Büyük = daha sakin çizgi.")]
+    [Tooltip("Nişan noktasının yeni hedefe kayma yumuşaklığı (sn). Büyük = daha sakin çizgi.")]
     [SerializeField] private float aimSmoothTime = 0.08f;
 
     [Header("Menzil")]
@@ -65,13 +59,12 @@ public class EnemyShooter : MonoBehaviour
     public bool IsEngaged => state != State.Idle;
     private Vector3 aimDirection = Vector3.left;
 
-    // RunPath: yumuşatılmış nişan noktası ve oyuncunun en son yerde koştuğu yükseklik
+    // Yumuşatılmış nişan noktası ve oyuncunun en son yerde koştuğu yükseklik
     private Vector3 aimPoint;
     private Vector3 aimPointVelocity;
     private float lastGroundY;
 
     private EnemyBody body;
-    private LeadAim aim;
     private BulletPool pool;
     private PlayerMotor player;
     private PlayerDeath playerDeath;
@@ -79,7 +72,6 @@ public class EnemyShooter : MonoBehaviour
     private void Awake()
     {
         body = GetComponent<EnemyBody>();
-        aim = GetComponent<LeadAim>();
         // Mermiler düşmanın altında değil, sahne kökünde durur (düşmanın görselleriyle karışmasın)
         var container = new GameObject($"{name}_Bullets").transform;
         pool = new BulletPool(bulletPrefab, container, prewarmCount);
@@ -140,19 +132,9 @@ public class EnemyShooter : MonoBehaviour
                 {
                     // Nişan serbest: her karede yeniden hesaplanır
                     float timeUntilFire = windUpTime - elapsed;
-                    if (aimMode == AimMode.RunPath)
-                    {
-                        aimPoint = Vector3.SmoothDamp(aimPoint, RunPathTarget(timeUntilFire), ref aimPointVelocity, aimSmoothTime);
-                        aimDirection = (aimPoint - muzzle.position).normalized;
-                        telegraph.Show(muzzle.position, aimDirection, false);
-                    }
-                    else
-                    {
-                        // Hedef, atış anındaki tahmini konum (kalan nişan süresi kadar ileri); yoksa kilit süresi kadar geride kalır
-                        Vector3 targetAtFire = player.transform.position + player.Velocity * timeUntilFire;
-                        aimDirection = aim.GetAimDirection(muzzle.position, targetAtFire, player.Velocity, bulletSpeed);
-                        telegraph.Show(muzzle.position, aimDirection, false);
-                    }
+                    aimPoint = Vector3.SmoothDamp(aimPoint, RunPathTarget(timeUntilFire), ref aimPointVelocity, aimSmoothTime);
+                    aimDirection = (aimPoint - muzzle.position).normalized;
+                    telegraph.Show(muzzle.position, aimDirection, false);
                 }
                 else if (elapsed < windUpTime)
                 {

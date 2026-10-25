@@ -34,6 +34,8 @@ public class SlingAbility : MonoBehaviour
     public event Action<Vector3> AimChanged;
 
     public bool IsSlinging { get; private set; }
+    // İçinde bulunulan sapan alanı (ipucu görseli için); sapan yokken null
+    public SlingZone CurrentZone => currentZone;
 
     // Fare oyuncuya bu kadar yakınsa yön değiştirilmez (titremeyi önler)
     private const float MinAimDistance = 0.1f;

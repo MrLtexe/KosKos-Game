@@ -132,8 +132,10 @@ public static class PrototypeLevelsBuilder
         U.Block(p, g, "PadWall", 122f, 0f, 1f, 6.5f);
         // Belge: fırlatma + ek zıplamanın tepesinde, kolay yolun biraz dışında
         Belge(p, id, new Vector3(119.5f, 9.5f, 0f));
-        DE.Turret(p, l, "Turret_Dodge", 140f, DE.TurretBullet(l));
-        Kumas(p, id, 4, new Vector3(146f, 1.2f, 0f));
+        // İlk bölüm: yumuşak silah (uzun uyarı, yavaş mermi, geçince ateş yok); fırlatma alanı inişinden uzakta
+        DE.Turret(p, l, "Turret_Dodge", 150f, DE.TurretBullet(l),
+            windUp: 0.7f, aimLock: 0.35f, bulletSpeed: 14f, passTolerance: 0.3f);
+        Kumas(p, id, 4, new Vector3(156f, 1.2f, 0f));
         B.BreakableBlock(p, g, "Breakable_TallWall", 162f, 0f, 1f, 6f);
 
         // Boşluk 170-175
@@ -174,7 +176,8 @@ public static class PrototypeLevelsBuilder
         U.Ground(p, g, "Ground_C", 138f, 250f);
 
         U.SafeZoneAt(p, "SafeZone_3", 145f, false);
-        DT.SlingZoneAt(p, "SlingZone", new Vector3(160f, 4f, 0f));
+        // Bölümdeki ilk (ve tek) sapan alanı: nasıl kullanılacağını anlatan uzun ipucu
+        DT.SlingZoneAt(p, "SlingZone", new Vector3(160f, 4f, 0f), tutorial: true);
         U.Block(p, g, "SlingWall", 168f, 0f, 1f, 8f);
         // Belge: sapanla yukarı nişan alınca ulaşılır
         Belge(p, id, new Vector3(176f, 10f, 0f));

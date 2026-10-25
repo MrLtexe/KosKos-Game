@@ -60,7 +60,9 @@ public static class SectionDEnemiesTestSceneBuilder
         U.SaveScene(scene, ScenePath);
     }
 
-    internal static void Turret(Transform parent, U.Layers layers, string name, float x, Bullet bulletPrefab)
+    // Varsayılan değerler sert tavan silahıdır; ilk bölümler gibi kolay yerlerde daha yumuşak değerler verilebilir
+    internal static void Turret(Transform parent, U.Layers layers, string name, float x, Bullet bulletPrefab,
+        float windUp = 0.4f, float aimLock = 0.2f, float bulletSpeed = 20f, float passTolerance = 4f)
     {
         // Tavan bloğu (y 8-9) ve altına asılı silah; kılıç menzilinin dışında
         U.Block(parent, layers.Ground, name + "_Ceiling", x - 3f, 8f, 6f, 1f);
@@ -74,12 +76,10 @@ public static class SectionDEnemiesTestSceneBuilder
         U.Colorize(turret, TurretColor);
 
         EnemyShooter shooter = SetupEnemy(turret, bulletPrefab, false, new Vector3(0f, -0.6f, 0f),
-            18f, 0.4f, 1.5f, 1, 0f, 20f);
-        // Koşu yoluna nişan: çizgi sakin kayar, kilitlenince oyuncu tepki vermezse vurulur
-        U.SetEnum(shooter, "aimMode", (int)EnemyShooter.AimMode.RunPath);
-        U.SetFloat(shooter, "aimLockTime", 0.2f);
-        // Oyuncu altından geçtikten sonra da kısa bir süre ateş eder
-        U.SetFloat(shooter, "passTolerance", 4f);
+            18f, windUp, 1.5f, 1, 0f, bulletSpeed);
+        U.SetFloat(shooter, "aimLockTime", aimLock);
+        // Oyuncu altından geçtikten sonra da bu mesafe boyunca ateş eder
+        U.SetFloat(shooter, "passTolerance", passTolerance);
     }
 
     // Dronlar havadadır: yerdeki oyuncu altından her zaman geçebilir (en düşük yükseklik zorlanır).
@@ -97,8 +97,6 @@ public static class SectionDEnemiesTestSceneBuilder
 
         EnemyShooter shooter = SetupEnemy(drone, bulletPrefab, true, Vector3.zero,
             range, 0.4f, 2f, 3, 5f, 14f);
-        // Tavan silahı gibi koşu yoluna nişan: çizgi sakin kayar
-        U.SetEnum(shooter, "aimMode", (int)EnemyShooter.AimMode.RunPath);
         U.SetFloat(shooter, "aimLockTime", 0.2f);
 
         var hover = drone.AddComponent<DroneHover>();
@@ -115,7 +113,6 @@ public static class SectionDEnemiesTestSceneBuilder
     {
         var body = enemy.AddComponent<EnemyBody>();
         U.SetBool(body, "swordCanKill", swordCanKill);
-        enemy.AddComponent<LeadAim>();
 
         var muzzle = new GameObject("Muzzle").transform;
         muzzle.SetParent(enemy.transform, false);

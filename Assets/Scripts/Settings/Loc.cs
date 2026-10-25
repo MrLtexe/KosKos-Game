@@ -97,6 +97,7 @@ public static class Loc
 
         // Oyuncu üstündeki ipuçları
         { "hint.launch", new[] { "{0}: launch", "{0}: fırlat" } },
+        { "hint.slingTutorial", new[] { "Move the mouse to aim\n{0}: launch", "Fareyle nişan al\n{0}: fırlat" } },
 
         // Kostümler (anahtar: "costume." + kostüm kimliği)
         { "costume.default", new[] { "Default", "Varsayılan" } },

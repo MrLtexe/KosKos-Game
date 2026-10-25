@@ -76,7 +76,12 @@ public class SlingArrowPlaceholder : MonoBehaviour
     private void SetVisible(bool visible)
     {
         // Tuş ataması değişmiş olabilir; ipucu her sapanda güncel zıplama tuşunu gösterir
-        if (visible && hintText != null) hintText.text = Loc.Format("hint.launch", input.JumpKeyName);
+        if (visible && hintText != null)
+        {
+            // Eğitici alan: nasıl nişan alınacağını da anlatan uzun ipucu
+            bool tutorial = sling.CurrentZone != null && sling.CurrentZone.ShowTutorialHint;
+            hintText.text = Loc.Format(tutorial ? "hint.slingTutorial" : "hint.launch", input.JumpKeyName);
+        }
         arrow.enabled = visible;
         hint.SetActive(visible);
     }

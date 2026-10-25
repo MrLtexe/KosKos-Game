@@ -85,6 +85,8 @@ public class SwordAttack : MonoBehaviour
         if (death.IsDead) return;
         if (sling != null && sling.IsSlinging) return;
         if (jetBag != null && jetBag.IsThrusting) return;
+        // Yolculuk baloncuğunun içindeyken hiçbir şey yapılamaz
+        if (TravelBubble.ActiveRider == motor) return;
         if (Time.fixedTime < attackStartTime + attackCooldown) return;
 
         IsAttacking = true;

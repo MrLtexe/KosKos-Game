@@ -31,19 +31,74 @@ public static class SectionDTraversalTestSceneBuilder
         ZiplineBetween(level, "Zipline", new Vector3(48f, 4f, 0f), new Vector3(92f, 3f, 0f));
 
         // Sapan bölümü: havadaki alan ve 8 yüksek duvar
-        SlingZoneAt(level, "SlingZone", new Vector3(120f, 4f, 0f));
+        SlingZoneAt(level, "SlingZone", new Vector3(120f, 4f, 0f), tutorial: true);
         U.Block(level, layers.Ground, "SlingWall", 128f, 0f, 1f, 8f);
+
+        // Yolculuk baloncuğu 1: eğri rota ile 180-198 arası boşluğun üstünden taşır, ileri-yukarı fırlatır
+        BubbleAt(level, "TravelBubble_Curve", new Vector3(152f, 1.5f, 0f),
+            new[] { new Vector3(165f, 6f, 0f), new Vector3(180f, 8f, 0f), new Vector3(194f, 5f, 0f) },
+            new Vector3(1f, 0.4f, 0f), 16f);
+        U.Ground(level, layers.Ground, "Ground_C", 198f, 250f);
+
+        // Yolculuk baloncuğu 2: kısa rota, sonra neredeyse dik yukarı fırlatıp yüksek bir kenara çıkarır
+        BubbleAt(level, "TravelBubble_Up", new Vector3(215f, 1.5f, 0f),
+            new[] { new Vector3(222f, 3f, 0f), new Vector3(230f, 4f, 0f) },
+            new Vector3(0.4f, 1f, 0f), 24f);
+        U.Block(level, layers.Ground, "BubbleLedge", 234f, 6.5f, 20f, 1f);
 
         U.SafeZoneAt(level, "SafeZone_Start", 0f, true);
         U.SafeZoneAt(level, "SafeZone_Zipline", 40f, false);
         U.SafeZoneAt(level, "SafeZone_Sling", 95f, false);
-        U.SafeZoneAt(level, "SafeZone_End", 140f, false);
-        U.KillZone(level, 90f, 300f);
+        U.SafeZoneAt(level, "SafeZone_Bubble", 140f, false);
+        U.SafeZoneAt(level, "SafeZone_Bubble2", 205f, false);
+        U.KillZone(level, 130f, 400f);
 
         GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
         U.AddFollowCamera(player);
 
         U.SaveScene(scene, ScenePath);
+    }
+
+    // Yolculuk baloncuğu: kökte giriş tetiği, çocuklarda rota noktaları (boş nesneler), fırlatma yönü ve hareket eden görsel.
+    // ejectTowards: son noktadan fırlatma yönü (birim vektör gibi; nesne son noktadan bu kadar uzağa konur)
+    internal static void BubbleAt(Transform parent, string name, Vector3 start, Vector3[] waypointPositions,
+        Vector3 ejectTowards, float ejectSpeed)
+    {
+        var root = new GameObject(name);
+        root.transform.SetParent(parent);
+        root.transform.position = start;
+        var trigger = root.AddComponent<SphereCollider>();
+        trigger.isTrigger = true;
+        trigger.radius = 1.2f;
+
+        var bubble = root.AddComponent<TravelBubble>();
+        var so = new SerializedObject(bubble);
+
+        SerializedProperty list = so.FindProperty("waypoints");
+        list.arraySize = waypointPositions.Length;
+        for (int i = 0; i < waypointPositions.Length; i++)
+        {
+            var waypoint = new GameObject($"Waypoint_{i + 1}").transform;
+            waypoint.SetParent(root.transform);
+            waypoint.position = waypointPositions[i];
+            list.GetArrayElementAtIndex(i).objectReferenceValue = waypoint;
+        }
+
+        var eject = new GameObject("EjectDirection").transform;
+        eject.SetParent(root.transform);
+        eject.position = waypointPositions[waypointPositions.Length - 1] + ejectTowards.normalized * 3f;
+        so.FindProperty("ejectDirection").objectReferenceValue = eject;
+        so.FindProperty("ejectSpeed").floatValue = ejectSpeed;
+
+        // GEÇİCİ görsel: oyuncuyu içine alan küre (renk ve saydamlık oyunda TravelBubble tarafından verilir)
+        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        visual.name = "BubbleVisual";
+        Object.DestroyImmediate(visual.GetComponent<Collider>());
+        visual.transform.SetParent(root.transform, false);
+        visual.transform.localScale = Vector3.one * 2.6f;
+        so.FindProperty("visual").objectReferenceValue = visual.transform;
+
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     internal static void LaunchPadAt(Transform parent, string name, float xLeft)
@@ -92,15 +147,26 @@ public static class SectionDTraversalTestSceneBuilder
         U.SetField(zipline, "end", endPoint);
     }
 
-    internal static void SlingZoneAt(Transform parent, string name, Vector3 center)
+    // Yakalama alanı 3x3 (kolay girilsin); görünen kısım oyuncunun arkasında küçük bir küre (oyuncu ve ok görünsün).
+    // tutorial: işaretliyse oyuncuya fareyle nişan alma + fırlatma tuşu uzun ipucuyla anlatılır (bölümdeki ilk sapan alanı)
+    internal static void SlingZoneAt(Transform parent, string name, Vector3 center, bool tutorial = false)
     {
-        GameObject zone = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        zone.name = name;
+        var zone = new GameObject(name);
         zone.transform.SetParent(parent);
         zone.transform.position = center;
-        zone.transform.localScale = new Vector3(3f, 3f, 1f);
-        zone.GetComponent<Collider>().isTrigger = true;
-        zone.AddComponent<SlingZone>();
-        U.Colorize(zone, SlingColor);
+        var trigger = zone.AddComponent<BoxCollider>();
+        trigger.isTrigger = true;
+        trigger.size = new Vector3(3f, 3f, 1f);
+        var slingZone = zone.AddComponent<SlingZone>();
+        U.SetBool(slingZone, "showTutorialHint", tutorial);
+
+        GameObject visual = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        visual.name = "Visual";
+        Object.DestroyImmediate(visual.GetComponent<Collider>());
+        visual.transform.SetParent(zone.transform, false);
+        // Kameradan uzakta (z +): oyuncunun ve nişan okunun arkasında kalır
+        visual.transform.localPosition = new Vector3(0f, 0f, 0.8f);
+        visual.transform.localScale = Vector3.one * 1.2f;
+        U.Colorize(visual, SlingColor);
     }
 }
