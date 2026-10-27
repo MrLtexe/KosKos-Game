@@ -269,6 +269,9 @@ GameObject:
   - component: {fileID: 115102943}
   - component: {fileID: 115102942}
   - component: {fileID: 115102941}
+  - component: {fileID: 115102947}
+  - component: {fileID: 115102946}
+  - component: {fileID: 115102945}
   m_Layer: 5
   m_Name: C_Dialogue
   m_TagString: Untagged
@@ -360,6 +363,178 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &115102945
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115102940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ebf5826e978fdfd47bd3a38a376d551d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueTestTrigger
+  startDialogue: 0
+  dialogueData: {fileID: 0}
+  testLines:
+  - speaker: 0
+    speakerName: KosKos
+    dialogueText: "Hey! Buras\u0131 neresi? Etrafta tuhaf makineler ve engeller var..."
+    customAvatar: {fileID: 0}
+    voiceClip: {fileID: 0}
+  - speaker: 1
+    speakerName: "G\xF6zlemci Drone"
+    dialogueText: "Dikkatli ol KosKos! \u0130lerideki sekt\xF6r hen\xFCz temizlenmedi.
+      Z\u0131plama ve sapan yeteneklerini kullanmal\u0131s\u0131n."
+    customAvatar: {fileID: 0}
+    voiceClip: {fileID: 0}
+  - speaker: 0
+    speakerName: KosKos
+    dialogueText: "Anla\u015F\u0131ld\u0131, yola koyuluyorum!"
+    customAvatar: {fileID: 0}
+    voiceClip: {fileID: 0}
+  testCanvas: {fileID: 115102940}
+--- !u!114 &115102946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115102940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 23a37e605595d024682e94a7c598470b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSystem
+  dialogueRoot: {fileID: 115102940}
+  playerAvatar: {fileID: 1129169264}
+  playerContainer: {fileID: 1130592523}
+  playerDialogueText: {fileID: 106008960}
+  playerNameText: {fileID: 1106690155}
+  defaultPlayerAvatar: {fileID: 0}
+  defaultPlayerName: KosKos
+  npcAvatar: {fileID: 649771344}
+  npcContainer: {fileID: 483995159}
+  npcDialogueText: {fileID: 289350674}
+  npcNameText: {fileID: 1349173372}
+  defaultNpcAvatar: {fileID: 0}
+  defaultNpcName: NPC
+  typingSpeed: 0.03
+  audioSource: {fileID: 115102947}
+  typewriterSound: {fileID: 0}
+  randomizePitch: 1
+  pitchRange: {x: 0.92, y: 1.08}
+  soundFrequency: 1
+  pauseTimeScale: 1
+  inputActions: {fileID: 0}
+  dialogueMapName: Dialogue
+  skipActionName: Skip
+  playerMapName: Player
+  skipActionReference: {fileID: 410131530685194074, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  OnDialogueStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDialogueEnded:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!82 &115102947
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115102940}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &214452994
 GameObject:
   m_ObjectHideFlags: 0
