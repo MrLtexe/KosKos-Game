@@ -75,3 +75,39 @@ Sahnede ([Test_DialogueSystem.unity](file:///c:/Users/Yunus/Documents/GitHub/Kos
    * Diyalogları başlatmak için bir tetikleyici bileşene (örneğin alana girince açılan `DialogueTrigger` veya sahne başlar başlamaz/ara sahnede tetiklenen bir akış) ihtiyacınız var mı?
 
 Bu plan üzerindeki düşüncelerinizi ve yukarıdaki soruların yanıtlarını paylaşırsanız kodlamaya geçebiliriz.
+
+
+---
+
+### 6. DOTween Geçiş ve Avatar Efektleri (Tamamlandı)
+* **Açılış (Enter / Open):**
+  * Konuşmacı kutusu (Player / NPC container) `alpha 0 -> 1`, `scale 0.88 -> 1.0` ve alttan hafif yukarı kayarak (`Ease.OutBack`) açılır.
+  * Aktif avatar (Player soldan, NPC sağdan) `alpha 0 -> 1`, `scale 0.82 -> 1.0` ve kenardan içeri doğru kayarak (`Ease.OutBack`) yaylanarak sahneye girer.
+* **Kapanış (Exit / Close):**
+  * Diyalog sonlandığında aktif kutu ve avatar hafif geriye doğru çekilerek (`Ease.InCubic`) ve `alpha -> 0` yapılarak kapanır; animasyon bitiminde arayüz gizlenir ve callback tetiklenir.
+* **Konuşmacı Değişimi (Speaker Switch):**
+  * Player -> NPC veya NPC -> Player geçişlerinde eski taraf kapanırken yeni taraf hafif zamanlama örtüşmesiyle (overlap) sahneye girer.
+* **Aynı Konuşmacı Devam Ederken (Micro Punch):**
+  * Kutu kapanıp açılmaz; avatar hafif bir konuşma tepkisi (punch scale bounce) vererek metin yazımına başlar.
+* **Zaman Dondurma Uyumluluğu:**
+  * Tüm geçişlerde `.SetUpdate(true)` kullanılarak `Time.timeScale = 0` olsa dahi akıcı şekilde çalışması sağlandı.
+* **Skip Duyarlılığı:**
+  * Geçiş esnasında oyuncu Skip tuşuna basarsa animasyon anında tamamlanarak daktilo yazımına geçilir (oyuncuyu bekletmez).
+
+
+---
+
+### 6. DOTween Geçiş ve Avatar Efektleri (Tamamlandı)
+* **Açılış (Enter / Open):**
+  * Konuşmacı kutusu (Player / NPC container) `alpha 0 -> 1`, `scale 0.88 -> 1.0` ve alttan hafif yukarı kayarak (`Ease.OutBack`) açılır.
+  * Aktif avatar (Player soldan, NPC sağdan) `alpha 0 -> 1`, `scale 0.82 -> 1.0` ve kenardan içeri doğru kayarak (`Ease.OutBack`) yaylanarak sahneye girer.
+* **Kapanış (Exit / Close):**
+  * Diyalog sonlandığında aktif kutu ve avatar hafif geriye doğru çekilerek (`Ease.InCubic`) ve `alpha -> 0` yapılarak kapanır; animasyon bitiminde arayüz gizlenir ve callback tetiklenir.
+* **Konuşmacı Değişimi (Speaker Switch):**
+  * Player -> NPC veya NPC -> Player geçişlerinde eski taraf kapanırken yeni taraf hafif zamanlama örtüşmesiyle (overlap) sahneye girer.
+* **Aynı Konuşmacı Devam Ederken (Micro Punch):**
+  * Kutu kapanıp açılmaz; avatar hafif bir konuşma tepkisi (punch scale bounce) vererek metin yazımına başlar.
+* **Zaman Dondurma Uyumluluğu:**
+  * Tüm geçişlerde `.SetUpdate(true)` kullanılarak `Time.timeScale = 0` olsa dahi akıcı şekilde çalışması sağlandı.
+* **Skip Duyarlılığı:**
+  * Geçiş esnasında oyuncu Skip tuşuna basarsa animasyon anında tamamlanarak daktilo yazımına geçilir (oyuncuyu bekletmez).

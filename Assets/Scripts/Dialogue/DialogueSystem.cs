@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,7 +9,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 /// <summary>
-/// Ara sahneler ve sahne geçişleri için daktilo efektli, sesli ve çift taraflı (Player / NPC) diyalog yöneticisi.
+/// Ara sahneler ve sahne geçişleri için daktilo efektli, DOTween geçiş animasyonlu,
+/// sesli ve çift taraflı (Player / NPC) diyalog yöneticisi.
 /// </summary>
 public class DialogueSystem : MonoBehaviour
 {
@@ -60,6 +62,24 @@ public class DialogueSystem : MonoBehaviour
     [Tooltip("Kaç harfte bir ses çalınsın (1: her harf)")]
     [SerializeField] private int soundFrequency = 1;
 
+    [Header("Geçiş (Transition) Efektleri")]
+    [Tooltip("Diyalog açılış animasyonu süresi (saniye)")]
+    [SerializeField] private float openDuration = 0.3f;
+    [Tooltip("Diyalog kapanış animasyonu süresi (saniye)")]
+    [SerializeField] private float closeDuration = 0.22f;
+    [Tooltip("Konuşmacı değiştiğinde geçiş süresi (saniye)")]
+    [SerializeField] private float switchDuration = 0.25f;
+    [Tooltip("Diyalog kutusunun alttan geliş mesafesi (Y offset)")]
+    [SerializeField] private float containerSlideOffsetY = -35f;
+    [Tooltip("Avatarın kenardan geliş mesafesi (X offset)")]
+    [SerializeField] private float avatarSlideOffsetX = 80f;
+    [Tooltip("Açılışta kullanılacak Ease eğrisi")]
+    [SerializeField] private Ease openEase = Ease.OutBack;
+    [Tooltip("Kapanışta kullanılacak Ease eğrisi")]
+    [SerializeField] private Ease closeEase = Ease.InCubic;
+    [Tooltip("Aynı konuşmacı konuşmaya devam ederken avatara hafif konuşma efekti (punch) verilsin mi?")]
+    [SerializeField] private bool punchAvatarOnSameSpeaker = true;
+
     [Header("Zaman Ayarı")]
     [Tooltip("Diyalog sırasında Time.timeScale = 0 yapılarak oyun dondurulsun mu?")]
     [SerializeField] private bool pauseTimeScale = true;
@@ -82,11 +102,38 @@ public class DialogueSystem : MonoBehaviour
     private int currentLineIndex = 0;
     private bool isDialogueActive = false;
     private bool isTyping = false;
+    private bool isTransitioning = false;
+    private bool isClosing = false;
+    private SpeakerType? lastSpeaker = null;
     private Coroutine typewriterCoroutine;
     private TextMeshProUGUI activeTextComponent;
     private int currentTotalCharacters = 0;
     private float cachedTimeScale = 1f;
     private Action onCompleteCallback;
+
+    // DOTween geçiş referansları
+    private Sequence activeTransitionSequence;
+
+    // Cache'lenen Transform ve CanvasGroup referansları
+    private RectTransform playerContainerRect;
+    private CanvasGroup playerContainerCanvasGroup;
+    private Vector2 playerContainerOriginalPos;
+    private Vector3 playerContainerOriginalScale = Vector3.one;
+
+    private RectTransform playerAvatarRect;
+    private CanvasGroup playerAvatarCanvasGroup;
+    private Vector2 playerAvatarOriginalPos;
+    private Vector3 playerAvatarOriginalScale = Vector3.one;
+
+    private RectTransform npcContainerRect;
+    private CanvasGroup npcContainerCanvasGroup;
+    private Vector2 npcContainerOriginalPos;
+    private Vector3 npcContainerOriginalScale = Vector3.one;
+
+    private RectTransform npcAvatarRect;
+    private CanvasGroup npcAvatarCanvasGroup;
+    private Vector2 npcAvatarOriginalPos;
+    private Vector3 npcAvatarOriginalScale = Vector3.one;
 
     // Input aksiyon referansları
     private InputAction skipAction;
@@ -107,9 +154,68 @@ public class DialogueSystem : MonoBehaviour
         Instance = this;
 
         SetupInput();
+        CacheOriginalTransforms();
 
         // Başlangıçta arayüzü kapat
-        HideDialogueUI();
+        HideDialogueUIImmediately();
+    }
+
+    private void CacheOriginalTransforms()
+    {
+        if (playerContainer != null)
+        {
+            playerContainerRect = playerContainer.GetComponent<RectTransform>();
+            if (playerContainerRect != null)
+            {
+                playerContainerOriginalPos = playerContainerRect.anchoredPosition;
+                playerContainerOriginalScale = playerContainerRect.localScale;
+            }
+            playerContainerCanvasGroup = GetOrAddCanvasGroup(playerContainer);
+        }
+
+        if (playerAvatar != null)
+        {
+            playerAvatarRect = playerAvatar.GetComponent<RectTransform>();
+            if (playerAvatarRect != null)
+            {
+                playerAvatarOriginalPos = playerAvatarRect.anchoredPosition;
+                playerAvatarOriginalScale = playerAvatarRect.localScale;
+            }
+            playerAvatarCanvasGroup = GetOrAddCanvasGroup(playerAvatar.gameObject);
+        }
+
+        if (npcContainer != null)
+        {
+            npcContainerRect = npcContainer.GetComponent<RectTransform>();
+            if (npcContainerRect != null)
+            {
+                npcContainerOriginalPos = npcContainerRect.anchoredPosition;
+                npcContainerOriginalScale = npcContainerRect.localScale;
+            }
+            npcContainerCanvasGroup = GetOrAddCanvasGroup(npcContainer);
+        }
+
+        if (npcAvatar != null)
+        {
+            npcAvatarRect = npcAvatar.GetComponent<RectTransform>();
+            if (npcAvatarRect != null)
+            {
+                npcAvatarOriginalPos = npcAvatarRect.anchoredPosition;
+                npcAvatarOriginalScale = npcAvatarRect.localScale;
+            }
+            npcAvatarCanvasGroup = GetOrAddCanvasGroup(npcAvatar.gameObject);
+        }
+    }
+
+    private CanvasGroup GetOrAddCanvasGroup(GameObject obj)
+    {
+        if (obj == null) return null;
+        CanvasGroup cg = obj.GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = obj.AddComponent<CanvasGroup>();
+        }
+        return cg;
     }
 
     private void SetupInput()
@@ -143,11 +249,16 @@ public class DialogueSystem : MonoBehaviour
         {
             skipAction.performed -= OnSkipActionPerformed;
         }
+        KillActiveTransition();
+    }
+
+    private void OnDestroy()
+    {
+        KillActiveTransition();
     }
 
     private void OnSkipActionPerformed(InputAction.CallbackContext context)
     {
-        if (!isDialogueActive) return;
         Skip();
     }
 
@@ -178,8 +289,13 @@ public class DialogueSystem : MonoBehaviour
             return;
         }
 
+        KillActiveTransition();
+
         currentLines = lines;
         currentLineIndex = 0;
+        lastSpeaker = null;
+        isClosing = false;
+        isTransitioning = false;
         onCompleteCallback = onComplete;
         isDialogueActive = true;
 
@@ -219,7 +335,27 @@ public class DialogueSystem : MonoBehaviour
     /// </summary>
     public void Skip()
     {
+        // Kapanış animasyonu oynuyorsa hemen tamamla
+        if (isClosing)
+        {
+            if (activeTransitionSequence != null && activeTransitionSequence.IsActive())
+            {
+                activeTransitionSequence.Complete();
+            }
+            return;
+        }
+
         if (!isDialogueActive) return;
+
+        // Geçiş animasyonu (açılış veya konuşmacı değişimi) oynuyorsa anında tamamla
+        if (isTransitioning)
+        {
+            if (activeTransitionSequence != null && activeTransitionSequence.IsActive())
+            {
+                activeTransitionSequence.Complete();
+            }
+            return;
+        }
 
         if (isTyping)
         {
@@ -250,24 +386,21 @@ public class DialogueSystem : MonoBehaviour
         if (typewriterCoroutine != null)
         {
             StopCoroutine(typewriterCoroutine);
+            typewriterCoroutine = null;
         }
 
         bool isPlayer = line.speaker == SpeakerType.Player;
 
-        // Player / NPC görünürlüğünü karşılıklı ayarla
-        SetSpeakerVisibility(isPlayer);
-
+        // Metin ve avatar içeriklerini hazırla
         if (isPlayer)
         {
             activeTextComponent = playerDialogueText;
 
-            // İsim ayarı
             if (playerNameText != null)
             {
                 playerNameText.text = string.IsNullOrEmpty(line.speakerName) ? defaultPlayerName : line.speakerName;
             }
 
-            // Avatar ayarı
             if (playerAvatar != null)
             {
                 Sprite avatarToUse = line.customAvatar != null ? line.customAvatar : defaultPlayerAvatar;
@@ -281,13 +414,11 @@ public class DialogueSystem : MonoBehaviour
         {
             activeTextComponent = npcDialogueText;
 
-            // İsim ayarı
             if (npcNameText != null)
             {
                 npcNameText.text = string.IsNullOrEmpty(line.speakerName) ? defaultNpcName : line.speakerName;
             }
 
-            // Avatar ayarı
             if (npcAvatar != null)
             {
                 Sprite avatarToUse = line.customAvatar != null ? line.customAvatar : defaultNpcAvatar;
@@ -298,6 +429,44 @@ public class DialogueSystem : MonoBehaviour
             }
         }
 
+        // Geçiş durumunu yönet (Açılış, Konuşmacı Değişimi veya Aynı Konuşmacı)
+        if (!lastSpeaker.HasValue)
+        {
+            // İlk satır: Açılış animasyonu
+            lastSpeaker = line.speaker;
+            isTransitioning = true;
+            AnimateSpeakerEnter(isPlayer, openDuration, () =>
+            {
+                isTransitioning = false;
+                StartTypewriter(line);
+            });
+        }
+        else if (lastSpeaker.Value == line.speaker)
+        {
+            // Aynı konuşmacı devam ediyor: Kapatıp açmak yerine hafif avatar konuşma punch'ı
+            isTransitioning = false;
+            if (punchAvatarOnSameSpeaker)
+            {
+                PunchActiveAvatar(isPlayer);
+            }
+            StartTypewriter(line);
+        }
+        else
+        {
+            // Konuşmacı değişti: Çıkan konuşmacı kapanırken yeni konuşmacı açılır
+            bool outgoingWasPlayer = (lastSpeaker.Value == SpeakerType.Player);
+            lastSpeaker = line.speaker;
+            isTransitioning = true;
+            AnimateSpeakerSwitch(outgoingWasPlayer, isPlayer, switchDuration, () =>
+            {
+                isTransitioning = false;
+                StartTypewriter(line);
+            });
+        }
+    }
+
+    private void StartTypewriter(DialogueLine line)
+    {
         if (activeTextComponent != null)
         {
             typewriterCoroutine = StartCoroutine(TypewriterRoutine(activeTextComponent, line.dialogueText, line.voiceClip));
@@ -308,16 +477,238 @@ public class DialogueSystem : MonoBehaviour
         }
     }
 
-    private void SetSpeakerVisibility(bool isPlayer)
-    {
-        // Player tarafı
-        if (playerAvatar != null) playerAvatar.gameObject.SetActive(isPlayer);
-        if (playerContainer != null) playerContainer.SetActive(isPlayer);
+    #region DOTween Geçiş Animasyonları
 
-        // NPC tarafı
-        if (npcAvatar != null) npcAvatar.gameObject.SetActive(!isPlayer);
-        if (npcContainer != null) npcContainer.SetActive(!isPlayer);
+    private void AnimateSpeakerEnter(bool isPlayer, float duration, Action onComplete)
+    {
+        KillActiveTransition();
+
+        // Karşı konuşmacıyı kapalı tut
+        bool otherIsPlayer = !isPlayer;
+        GameObject otherContainer = otherIsPlayer ? playerContainer : npcContainer;
+        GameObject otherAvatar = otherIsPlayer ? (playerAvatar != null ? playerAvatar.gameObject : null) : (npcAvatar != null ? npcAvatar.gameObject : null);
+        if (otherContainer != null) otherContainer.SetActive(false);
+        if (otherAvatar != null) otherAvatar.SetActive(false);
+
+        activeTransitionSequence = CreateEnterSequence(isPlayer, duration);
+        activeTransitionSequence.OnComplete(() =>
+        {
+            activeTransitionSequence = null;
+            onComplete?.Invoke();
+        });
     }
+
+    private void AnimateSpeakerSwitch(bool outgoingIsPlayer, bool incomingIsPlayer, float duration, Action onComplete)
+    {
+        KillActiveTransition();
+
+        activeTransitionSequence = DOTween.Sequence().SetUpdate(true);
+
+        float exitDuration = duration * 0.65f;
+        float enterDuration = duration;
+
+        Sequence exitSeq = CreateExitSequence(outgoingIsPlayer, exitDuration);
+        Sequence enterSeq = CreateEnterSequence(incomingIsPlayer, enterDuration);
+
+        // Çıkış başlar, çıkış bitmeden yeni konuşmacı hafif overlap ile sahneye girer
+        activeTransitionSequence.Append(exitSeq);
+        activeTransitionSequence.Insert(exitDuration * 0.35f, enterSeq);
+
+        activeTransitionSequence.OnComplete(() =>
+        {
+            activeTransitionSequence = null;
+            onComplete?.Invoke();
+        });
+    }
+
+    private void AnimateClose(bool isPlayer, float duration, Action onComplete)
+    {
+        KillActiveTransition();
+
+        if (dialogueRoot == null || !dialogueRoot.activeInHierarchy)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        activeTransitionSequence = CreateExitSequence(isPlayer, duration);
+        activeTransitionSequence.OnComplete(() =>
+        {
+            activeTransitionSequence = null;
+            onComplete?.Invoke();
+        });
+    }
+
+    private Sequence CreateEnterSequence(bool isPlayer, float duration)
+    {
+        Sequence seq = DOTween.Sequence().SetUpdate(true);
+
+        RectTransform containerRect = isPlayer ? playerContainerRect : npcContainerRect;
+        CanvasGroup containerCg = isPlayer ? playerContainerCanvasGroup : npcContainerCanvasGroup;
+        Vector2 containerOrigPos = isPlayer ? playerContainerOriginalPos : npcContainerOriginalPos;
+        Vector3 containerOrigScale = isPlayer ? playerContainerOriginalScale : npcContainerOriginalScale;
+
+        RectTransform avatarRect = isPlayer ? playerAvatarRect : npcAvatarRect;
+        CanvasGroup avatarCg = isPlayer ? playerAvatarCanvasGroup : npcAvatarCanvasGroup;
+        Vector2 avatarOrigPos = isPlayer ? playerAvatarOriginalPos : npcAvatarOriginalPos;
+        Vector3 avatarOrigScale = isPlayer ? playerAvatarOriginalScale : npcAvatarOriginalScale;
+        float avatarDir = isPlayer ? -1f : 1f;
+
+        GameObject containerObj = isPlayer ? playerContainer : npcContainer;
+        GameObject avatarObj = isPlayer ? (playerAvatar != null ? playerAvatar.gameObject : null) : (npcAvatar != null ? npcAvatar.gameObject : null);
+
+        if (containerObj != null) containerObj.SetActive(true);
+        if (avatarObj != null) avatarObj.SetActive(true);
+
+        // Başlangıç değerleri
+        if (containerCg != null)
+        {
+            containerCg.alpha = 0f;
+            containerCg.interactable = false;
+            containerCg.blocksRaycasts = false;
+        }
+
+        if (containerRect != null)
+        {
+            containerRect.anchoredPosition = containerOrigPos + new Vector2(0f, containerSlideOffsetY);
+            containerRect.localScale = containerOrigScale * 0.88f;
+        }
+
+        if (avatarCg != null)
+        {
+            avatarCg.alpha = 0f;
+        }
+
+        if (avatarRect != null)
+        {
+            avatarRect.anchoredPosition = avatarOrigPos + new Vector2(avatarDir * avatarSlideOffsetX, 0f);
+            avatarRect.localScale = avatarOrigScale * 0.82f;
+        }
+
+        // Tweens: Container
+        if (containerCg != null)
+        {
+            seq.Join(containerCg.DOFade(1f, duration).SetUpdate(true));
+        }
+        if (containerRect != null)
+        {
+            seq.Join(containerRect.DOAnchorPos(containerOrigPos, duration).SetEase(openEase).SetUpdate(true));
+            seq.Join(containerRect.DOScale(containerOrigScale, duration).SetEase(openEase).SetUpdate(true));
+        }
+
+        // Tweens: Avatar
+        if (avatarCg != null)
+        {
+            seq.Join(avatarCg.DOFade(1f, duration).SetUpdate(true));
+        }
+        if (avatarRect != null)
+        {
+            seq.Join(avatarRect.DOAnchorPos(avatarOrigPos, duration).SetEase(openEase).SetUpdate(true));
+            seq.Join(avatarRect.DOScale(avatarOrigScale, duration).SetEase(openEase).SetUpdate(true));
+        }
+
+        seq.OnComplete(() =>
+        {
+            if (containerCg != null)
+            {
+                containerCg.interactable = true;
+                containerCg.blocksRaycasts = true;
+            }
+        });
+
+        return seq;
+    }
+
+    private Sequence CreateExitSequence(bool isPlayer, float duration)
+    {
+        Sequence seq = DOTween.Sequence().SetUpdate(true);
+
+        RectTransform containerRect = isPlayer ? playerContainerRect : npcContainerRect;
+        CanvasGroup containerCg = isPlayer ? playerContainerCanvasGroup : npcContainerCanvasGroup;
+        Vector2 containerOrigPos = isPlayer ? playerContainerOriginalPos : npcContainerOriginalPos;
+        Vector3 containerOrigScale = isPlayer ? playerContainerOriginalScale : npcContainerOriginalScale;
+
+        RectTransform avatarRect = isPlayer ? playerAvatarRect : npcAvatarRect;
+        CanvasGroup avatarCg = isPlayer ? playerAvatarCanvasGroup : npcAvatarCanvasGroup;
+        Vector2 avatarOrigPos = isPlayer ? playerAvatarOriginalPos : npcAvatarOriginalPos;
+        Vector3 avatarOrigScale = isPlayer ? playerAvatarOriginalScale : npcAvatarOriginalScale;
+        float avatarDir = isPlayer ? -1f : 1f;
+
+        GameObject containerObj = isPlayer ? playerContainer : npcContainer;
+        GameObject avatarObj = isPlayer ? (playerAvatar != null ? playerAvatar.gameObject : null) : (npcAvatar != null ? npcAvatar.gameObject : null);
+
+        if (containerCg != null)
+        {
+            containerCg.interactable = false;
+            containerCg.blocksRaycasts = false;
+            seq.Join(containerCg.DOFade(0f, duration).SetUpdate(true));
+        }
+
+        if (containerRect != null)
+        {
+            Vector2 targetPos = containerOrigPos + new Vector2(0f, containerSlideOffsetY * 0.5f);
+            seq.Join(containerRect.DOAnchorPos(targetPos, duration).SetEase(closeEase).SetUpdate(true));
+            seq.Join(containerRect.DOScale(containerOrigScale * 0.88f, duration).SetEase(closeEase).SetUpdate(true));
+        }
+
+        if (avatarCg != null)
+        {
+            seq.Join(avatarCg.DOFade(0f, duration).SetUpdate(true));
+        }
+
+        if (avatarRect != null)
+        {
+            Vector2 targetPos = avatarOrigPos + new Vector2(avatarDir * (avatarSlideOffsetX * 0.7f), 0f);
+            seq.Join(avatarRect.DOAnchorPos(targetPos, duration).SetEase(closeEase).SetUpdate(true));
+            seq.Join(avatarRect.DOScale(avatarOrigScale * 0.82f, duration).SetEase(closeEase).SetUpdate(true));
+        }
+
+        seq.OnComplete(() =>
+        {
+            if (containerObj != null) containerObj.SetActive(false);
+            if (avatarObj != null) avatarObj.SetActive(false);
+
+            if (containerRect != null)
+            {
+                containerRect.anchoredPosition = containerOrigPos;
+                containerRect.localScale = containerOrigScale;
+            }
+            if (avatarRect != null)
+            {
+                avatarRect.anchoredPosition = avatarOrigPos;
+                avatarRect.localScale = avatarOrigScale;
+            }
+        });
+
+        return seq;
+    }
+
+    private void PunchActiveAvatar(bool isPlayer)
+    {
+        RectTransform avatarRect = isPlayer ? playerAvatarRect : npcAvatarRect;
+        Vector3 origScale = isPlayer ? playerAvatarOriginalScale : npcAvatarOriginalScale;
+
+        if (avatarRect != null)
+        {
+            avatarRect.DOKill(true);
+            avatarRect.localScale = origScale;
+            avatarRect.DOPunchScale(Vector3.one * 0.08f, 0.2f, 2, 0.5f).SetUpdate(true);
+        }
+    }
+
+    private void KillActiveTransition()
+    {
+        if (activeTransitionSequence != null)
+        {
+            if (activeTransitionSequence.IsActive())
+            {
+                activeTransitionSequence.Kill();
+            }
+            activeTransitionSequence = null;
+        }
+    }
+
+    #endregion
 
     private IEnumerator TypewriterRoutine(TextMeshProUGUI targetText, string fullText, AudioClip customClip)
     {
@@ -394,7 +785,7 @@ public class DialogueSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// Diyalog sürecini sonlandırır ve UI'ı eski haline getirir.
+    /// Diyalog sürecini sonlandırır ve kapanış animasyonunun ardından UI'ı kapatır.
     /// </summary>
     public void EndDialogue()
     {
@@ -408,40 +799,77 @@ public class DialogueSystem : MonoBehaviour
 
         isTyping = false;
         isDialogueActive = false;
+        isClosing = true;
 
-        HideDialogueUI();
+        bool closePlayer = (!lastSpeaker.HasValue || lastSpeaker.Value == SpeakerType.Player);
 
-        // TimeScale'i eski haline getir
-        if (pauseTimeScale)
+        AnimateClose(closePlayer, closeDuration, () =>
         {
-            Time.timeScale = cachedTimeScale;
-        }
+            isClosing = false;
+            lastSpeaker = null;
 
-        // Input haritalarını geri yükle
-        if (dialogueMap != null && dialogueMap.enabled)
-        {
-            dialogueMap.Disable();
-        }
+            HideDialogueUIImmediately();
 
-        if (playerMap != null && !playerMap.enabled)
-        {
-            playerMap.Enable();
-        }
+            // TimeScale'i eski haline getir
+            if (pauseTimeScale)
+            {
+                Time.timeScale = cachedTimeScale;
+            }
 
-        Action callback = onCompleteCallback;
-        onCompleteCallback = null;
-        currentLines = null;
+            // Input haritalarını geri yükle
+            if (dialogueMap != null && dialogueMap.enabled)
+            {
+                dialogueMap.Disable();
+            }
 
-        OnDialogueEnded?.Invoke();
-        callback?.Invoke();
+            if (playerMap != null && !playerMap.enabled)
+            {
+                playerMap.Enable();
+            }
+
+            Action callback = onCompleteCallback;
+            onCompleteCallback = null;
+            currentLines = null;
+
+            OnDialogueEnded?.Invoke();
+            callback?.Invoke();
+        });
     }
 
-    private void HideDialogueUI()
+    private void HideDialogueUIImmediately()
     {
+        KillActiveTransition();
+
         if (playerAvatar != null) playerAvatar.gameObject.SetActive(false);
         if (playerContainer != null) playerContainer.SetActive(false);
         if (npcAvatar != null) npcAvatar.gameObject.SetActive(false);
         if (npcContainer != null) npcContainer.SetActive(false);
+
+        if (playerContainerCanvasGroup != null) playerContainerCanvasGroup.alpha = 0f;
+        if (playerAvatarCanvasGroup != null) playerAvatarCanvasGroup.alpha = 0f;
+        if (npcContainerCanvasGroup != null) npcContainerCanvasGroup.alpha = 0f;
+        if (npcAvatarCanvasGroup != null) npcAvatarCanvasGroup.alpha = 0f;
+
+        if (playerContainerRect != null)
+        {
+            playerContainerRect.anchoredPosition = playerContainerOriginalPos;
+            playerContainerRect.localScale = playerContainerOriginalScale;
+        }
+        if (playerAvatarRect != null)
+        {
+            playerAvatarRect.anchoredPosition = playerAvatarOriginalPos;
+            playerAvatarRect.localScale = playerAvatarOriginalScale;
+        }
+        if (npcContainerRect != null)
+        {
+            npcContainerRect.anchoredPosition = npcContainerOriginalPos;
+            npcContainerRect.localScale = npcContainerOriginalScale;
+        }
+        if (npcAvatarRect != null)
+        {
+            npcAvatarRect.anchoredPosition = npcAvatarOriginalPos;
+            npcAvatarRect.localScale = npcAvatarOriginalScale;
+        }
 
         if (dialogueRoot != null)
         {
