@@ -277,7 +277,7 @@ public static class UiPrefabBuilder
         RectTransform hudBox = NewRect("Hud", root.transform);
         hudBox.anchorMin = hudBox.anchorMax = hudBox.pivot = new Vector2(0f, 1f);
         hudBox.anchoredPosition = new Vector2(20f, -20f);
-        hudBox.sizeDelta = new Vector2(330f, 170f);
+        hudBox.sizeDelta = new Vector2(330f, 210f);
         hudBox.gameObject.AddComponent<Image>().color = HudColor;
         var hudLayout = AddVerticalLayout(hudBox.gameObject, 2f);
         hudLayout.padding = new RectOffset(16, 16, 10, 10);
@@ -287,6 +287,7 @@ public static class UiPrefabBuilder
         TMP_Text deaths = Text(hudBox, "Deaths", 30, TextAlignmentOptions.MidlineLeft, null, -1f);
         TMP_Text fabric = Text(hudBox, "Fabric", 30, TextAlignmentOptions.MidlineLeft, null, -1f);
         TMP_Text document = Text(hudBox, "Document", 30, TextAlignmentOptions.MidlineLeft, null, -1f);
+        TMP_Text speed = Text(hudBox, "Speed", 30, TextAlignmentOptions.MidlineLeft, null, -1f);
         Wire(hud, so =>
         {
             Set(so, "root", hudBox.gameObject);
@@ -294,6 +295,7 @@ public static class UiPrefabBuilder
             Set(so, "deathsText", deaths);
             Set(so, "fabricText", fabric);
             Set(so, "documentText", document);
+            Set(so, "speedText", speed);
         });
 
         // Duraklatma

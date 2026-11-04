@@ -96,6 +96,7 @@ public static class Loc
         { "hud.deaths", new[] { "Deaths: {0}", "Ölüm: {0}" } },
         { "hud.fabric", new[] { "Fabric: {0}/{1}", "Kumaş: {0}/{1}" } },
         { "hud.document", new[] { "Document: {0}/{1}", "Belge: {0}/{1}" } },
+        { "hud.speed", new[] { "Speed: {0} m/s", "Hız: {0} m/s" } },
         { "results.title", new[] { "Level complete!", "Bölüm tamamlandı!" } },
         { "results.time", new[] { "Time: {0}", "Süre: {0}" } },
         { "results.collectibles", new[] { "Fabric: {0}/{1}    Document: {2}/{3}", "Kumaş: {0}/{1}    Belge: {2}/{3}" } },

@@ -13,7 +13,7 @@ public class BoostChargeAbility : MonoBehaviour
     [SerializeField] private float stepDuration = 0.5f;
 
     [Tooltip("Adım 1, 2, 3'te bırakınca eklenen hız (birim/sn). Dizi uzunluğu adım sayısını belirler.")]
-    [SerializeField] private float[] stepBoosts = { 4f, 8f, 12f };
+    [SerializeField] private float[] stepBoosts = { 12f, 20f, 24f};
 
     [Tooltip("Son adıma ulaştıktan sonra patlamadan önce tutulabilecek süre (sn).")]
     [SerializeField] private float overchargeTime = 0.75f;

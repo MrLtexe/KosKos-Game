@@ -55,6 +55,7 @@ public static class SectionDTraversalTestSceneBuilder
 
         GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
         U.AddFollowCamera(player);
+        U.AddLevelUI(scene);
 
         U.SaveScene(scene, ScenePath);
     }

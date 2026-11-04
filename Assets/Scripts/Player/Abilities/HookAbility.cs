@@ -3,7 +3,8 @@ using UnityEngine;
 
 // Kanca (C): E basılı tutulunca öndeki en yakın kanca noktasına tutunur.
 // Nokta başın üstündeyse sallanma (sarkaç), oyuncuyla aynı hizadaysa çekilme.
-// Sallanırken E bırakılınca ileri gidiyorsak teğet hızla fırlatılır, geri gidiyorsak sadece düşer.
+// Sallanmada ileri hız giriş hızı + bonus, hiç düşmez (geri sallanma yok); E bırakılınca ileri fırlatılır.
+// E yay sonundan (varsayılan 90°) önce bırakılmazsa oyuncu patlar (ölüm).
 // Tavana çarpmak ölümdür; önden duvara çarpmak motorun normal kuralıyla ölümdür.
 // Motor'dan önce çalışır: kilit bırakıldığı adımda motor hemen normal harekete döner
 [DefaultExecutionOrder(-10)]
@@ -24,12 +25,14 @@ public class HookAbility : MonoBehaviour
     [Tooltip("İp uzunluğunun üst sınırı (birim).")]
     [SerializeField] private float maxRopeLength = 7f;
 
-    [Tooltip("İleri doğru bırakınca teğet hızın çarpanı. 1 = hız aynen korunur.")]
+    [Tooltip("Bırakınca (ya da sallanma kendiliğinden bitince) fırlatma hızının çarpanı. 1 = hız aynen korunur.")]
     [SerializeField] private float releaseBoost = 1.15f;
 
-    [Tooltip("Sarkacı çeken yerçekimi (birim/sn²). Motorun yerçekimiyle aynı tutulması önerilir.")]
-    [SerializeField] private float swingGravity = 40f;
+    [Tooltip("Yay sonu (derece, 0 = noktanın tam altı, en fazla 90 = nokta hizası): E bu açıdan önce bırakılmalı; sallanma bu açıya varırsa oyuncu patlar (ölüm).")]
+    [SerializeField] private float maxSwingAngle = 90f;
 
+    [Tooltip("Tutununca ileri hıza eklenen hız (birim/sn). Sallanma boyunca bu hız sabit kalır, düşmez.")]
+    [SerializeField] private float swingEntryBonus = 3f;
     [Header("Çekilme")]
     [Tooltip("Çekilme hızı (birim/sn).")]
     [SerializeField] private float pullSpeed = 35f;
@@ -48,6 +51,10 @@ public class HookAbility : MonoBehaviour
     public bool IsHooked => mode != Mode.None;
     // İp görseli için tutunulan nokta
     public Vector3 AnchorPosition => anchor;
+    public bool IsSwinging => mode == Mode.Swing;
+    // Sallanma açısı (derece, 0 = noktanın tam altı) ve patlama sınırı; açı göstergesi için
+    public float SwingAngleDegrees => angle * Mathf.Rad2Deg;
+    public float MaxSwingAngle => Mathf.Min(maxSwingAngle, 90f);
 
     private enum Mode { None, Swing, Pull }
 
@@ -61,7 +68,8 @@ public class HookAbility : MonoBehaviour
     private float ropeLength;
     // Sarkaç açısı: 0 = noktanın tam altı, pozitif = noktanın önü
     private float angle;
-    private float angularVelocity;
+    // Sallanmadaki ileri (yatay) hız: giriş hızı + bonus, sallanma boyunca sabit; geri sallanma yok
+    private float swingSpeed;
     private bool releaseRequested;
 
     private void Awake()
@@ -145,10 +153,10 @@ public class HookAbility : MonoBehaviour
 
         if (-offset.y > pullHeightTolerance)
         {
-            // Nokta başın üstünde: sallanma. Başlangıç açısal hızı oyuncunun ipe teğet hızından gelir
+            // Nokta başın üstünde: sallanma. Oyuncu yay boyunca giriş ileri hızıyla (en az koşu hızı) hep ileri gider
             ropeLength = Mathf.Clamp(offset.magnitude, minRopeLength, maxRopeLength);
             angle = Mathf.Atan2(offset.x, -offset.y);
-            angularVelocity = Vector3.Dot(motor.Velocity, Tangent()) / ropeLength;
+            swingSpeed = Mathf.Max(motor.Velocity.x, motor.RunSpeed) + swingEntryBonus;
             mode = Mode.Swing;
         }
         else
@@ -180,14 +188,11 @@ public class HookAbility : MonoBehaviour
 
     private void StepSwing(float dt)
     {
-        Vector3 velocity = Tangent() * (angularVelocity * ropeLength);
-
+        // Bırakınca fırlat: ileri hız aynen (çarpanla), yukarı hız ipin açısından
         if (releaseRequested)
         {
             EndHook();
-            // İleri gidiyorsak teğet hızla fırlat, geri gidiyorsak sadece düş
-            if (velocity.x > 0f) motor.Launch(velocity * releaseBoost);
-            else Drop(velocity);
+            motor.Launch(new Vector3(swingSpeed, swingSpeed * Mathf.Sin(angle), 0f) * releaseBoost);
             return;
         }
 
@@ -200,15 +205,25 @@ public class HookAbility : MonoBehaviour
 
         if (motor.IsGrounded)
         {
-            // Yere değdi: sallanma biter, geri bırakma gibi düşer
+            // Yere değdi: sallanma biter, ileri hız korunarak koşuya devam edilir
             EndHook();
-            Drop(velocity);
+            motor.Launch(new Vector3(swingSpeed, 0f, 0f));
             return;
         }
 
-        // Sarkaç: açısal ivme = -(g / L) * sin(açı)
-        angularVelocity += -(swingGravity / ropeLength) * Mathf.Sin(angle) * dt;
-        angle += angularVelocity * dt;
+        // Yay sonuna varıldı ve E hâlâ basılı: patlama (90°'de açı tam sınıra eşit olur, küçük pay bırakılır)
+        if (SwingAngleDegrees >= MaxSwingAngle - 0.01f)
+        {
+            // Kilit ölmeden önce bırakılır; yeniden doğuşta karakter normal koşsun
+            EndHook();
+            Debug.Log("[KosKos] Kanca patladı");
+            death.Die();
+            return;
+        }
+
+        // Konum yatayda sabit ileri hızla ilerler, yükseklik ipin çemberinden gelir (durmaz, yay sonunu geçebilir)
+        float x = Mathf.Min(Mathf.Sin(angle) * ropeLength + swingSpeed * dt, ropeLength);
+        angle = Mathf.Asin(x / ropeLength);
 
         Vector3 goal = anchor + new Vector3(Mathf.Sin(angle), -Mathf.Cos(angle), 0f) * ropeLength;
         motor.SetVelocity((goal - motor.Position) / dt);
@@ -234,15 +249,6 @@ public class HookAbility : MonoBehaviour
         // Son adımda bitişi geçmesin
         float speed = Mathf.Min(pullSpeed, distance / dt);
         motor.SetVelocity(toEnd / distance * speed);
-    }
-
-    // İpe teğet birim yön (açı artınca gidilen yön)
-    private Vector3 Tangent() => new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
-
-    // Yatay hız sıfırlanır, sadece aşağı yöndeki hız korunur; motor sonra normal koşuya döner
-    private void Drop(Vector3 velocity)
-    {
-        motor.Launch(new Vector3(0f, Mathf.Min(velocity.y, 0f), 0f));
     }
 
     private void EndHook()

@@ -1200,6 +1200,8 @@ GameObject:
   - component: {fileID: 6097756417162671313}
   - component: {fileID: 4849646560294962034}
   - component: {fileID: 7747137792940635670}
+  - component: {fileID: 3141592653589793238}
+  - component: {fileID: 2718281828459045235}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -1414,7 +1416,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DashAbility
   dashSpeed: 22
-  dashDuration: 0.15
+  dashDuration: 0.2
   groundDashCooldown: 0.3
   phaseableLayers:
     serializedVersion: 2
@@ -1441,6 +1443,13 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967039
   hitboxVisual: {fileID: 2763350813586597441}
+  slashRadius: 1.7
+  slashThickness: 0.5
+  slashStartAngle: -80
+  slashEndAngle: 100
+  slashDuration: 0.2
+  slashColor: {r: 1, g: 1, b: 1, a: 1}
+  slashDepth: -0.3
 --- !u!114 &4074305189404432311
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1455,9 +1464,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BoostChargeAbility
   stepDuration: 0.5
   stepBoosts:
-  - 4
-  - 8
   - 12
+  - 20
+  - 24
   overchargeTime: 0.75
 --- !u!114 &7219594950352367511
 MonoBehaviour:
@@ -1513,7 +1522,6 @@ MonoBehaviour:
   minRopeLength: 2
   maxRopeLength: 7
   releaseBoost: 1.15
-  swingGravity: 40
   pullArriveDistance: 0.5
 --- !u!114 &5622051878394532230
 MonoBehaviour:
@@ -1549,6 +1557,50 @@ MonoBehaviour:
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0.5, b: 0, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
+--- !u!114 &2718281828459045235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b07a8641014483043a0b8a8cb5327ab8, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeathExplosionPlaceholder
+  colorA: {r: 0, g: 0.55, b: 0.65, a: 1}
+  colorB: {r: 0.4, g: 0.22, b: 0.65, a: 1}
+  cubeCount: 24
+  cubeSpeed: {x: 4, y: 10}
+  cubeSize: {x: 0.12, y: 0.3}
+  cubeLifetime: {x: 0.5, y: 0.9}
+  cubeDrag: 4
+  streakCount: 16
+  streakSpeed: {x: 12, y: 22}
+  streakLifetime: {x: 0.12, y: 0.25}
+  ringCount: 48
+  ringSpeed: 10
+  ringLifetime: 0.25
+--- !u!114 &3141592653589793238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f0cec7766b074e45bd24e593c0fdbec, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DashTrailPlaceholder
+  streakColorA: {r: 0, g: 1, b: 1, a: 1}
+  streakColorB: {r: 0.8, g: 0.6, b: 1, a: 1}
+  burstCount: 10
+  emitRate: 120
+  lifetime: 0.25
+  streakLength: 0.8
+  streakThickness: 0.06
 --- !u!114 &6593671263816225314
 MonoBehaviour:
   m_ObjectHideFlags: 0

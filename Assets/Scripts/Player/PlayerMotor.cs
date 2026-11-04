@@ -47,6 +47,7 @@ public class PlayerMotor : MonoBehaviour
 
     public bool IsGrounded { get; private set; }
     public float CurrentSpeed => currentSpeed;
+    public float RunSpeed => runSpeed;
     public bool IsControlLocked => controlOwner != null;
     public bool IsBoosted => currentSpeed > runSpeed + BoostEpsilon;
     // Düşmanların hedef önü nişan alması için
@@ -67,6 +68,9 @@ public class PlayerMotor : MonoBehaviour
     private float currentSpeed;
     private object controlOwner;
     private bool frozen;
+    // Yeteneklerin verdiği ek X ve Z eğimi (derece)
+    private float tiltX;
+    private float tiltZ;
     private float upSign = 1f;
 
     // Zemin taramasının başlangıcını biraz yukarı alır; başlangıçta zemine gömülü kalmasın diye
@@ -271,12 +275,29 @@ public class PlayerMotor : MonoBehaviour
         if (IsWallRunning) SetWallRun(false);
     }
 
-    // Karakterin dönüşü yüzey moduna göre: tavan = baş aşağı, duvar koşusu = hafif eğik, normal = düz
+    // Yeteneklerin ek Z eğimi (derece; ör. atılmada öne/arkaya yatma). Yüzey dönüşünün üstüne eklenir
+    public void SetTiltZ(float degrees)
+    {
+        if (Mathf.Approximately(tiltZ, degrees)) return;
+        tiltZ = degrees;
+        ApplyRotation();
+    }
+
+    // Yeteneklerin ek X eğimi (derece; ör. zipline'da dengeye göre yana yatma). Yüzey dönüşünün üstüne eklenir
+    public void SetTiltX(float degrees)
+    {
+        if (Mathf.Approximately(tiltX, degrees)) return;
+        tiltX = degrees;
+        ApplyRotation();
+    }
+
+    // Karakterin dönüşü yüzey moduna göre: tavan = baş aşağı, duvar koşusu = hafif eğik, normal = düz; üstüne ek X/Z eğimi
     private void ApplyRotation()
     {
         Quaternion rotation = IsCeilingMode ? Quaternion.Euler(180f, 0f, 0f)
             : IsWallRunning ? Quaternion.Euler(wallRunTilt, 0f, 0f)
             : Quaternion.identity;
+        rotation *= Quaternion.Euler(tiltX, 0f, tiltZ);
         rb.rotation = rotation;
         transform.rotation = rotation;
     }

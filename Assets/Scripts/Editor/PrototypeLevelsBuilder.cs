@@ -103,8 +103,7 @@ public static class PrototypeLevelsBuilder
         U.AddFollowCamera(player);
 
         // Bölüm arayüzü: LevelUI prefab'ı (yoksa önce üretilir); düzeni prefab'da düzenlenir, tüm bölümlere yansır
-        UiPrefabBuilder.EnsurePrefabs();
-        PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(UiPrefabBuilder.LevelUiPath), scene);
+        U.AddLevelUI(scene);
 
         U.SaveScene(scene, $"Assets/Scenes/{def.sceneName}.unity");
         return true;

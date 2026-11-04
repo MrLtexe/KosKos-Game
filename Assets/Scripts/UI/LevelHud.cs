@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-// Bölüm içi gösterge (LevelUI prefab'ı, sol üst): süre, ölüm sayısı, Kumaş ve Belge sayıları.
+// Bölüm içi gösterge (LevelUI prefab'ı, sol üst): süre, ölüm sayısı, Kumaş ve Belge sayıları, hız.
 // Düzen ve görünüm prefab'da düzenlenir; bu kod sadece yazıları doldurur.
 public class LevelHud : MonoBehaviour
 {
@@ -20,11 +20,17 @@ public class LevelHud : MonoBehaviour
     [Tooltip("Belge sayısı yazısı.")]
     [SerializeField] private TMP_Text documentText;
 
+    [Tooltip("Hız yazısı (oyuncunun ileri hızı, m/s). Boş bırakılırsa hız gösterilmez.")]
+    [SerializeField] private TMP_Text speedText;
+
     // Son gösterilen değerler: yazılar sadece değişince yeniden oluşturulur (her karede dize üretilmesin)
     private int shownTenths = -1;
     private int shownDeaths = -1;
     private int shownKumas = -1;
     private int shownBelge = -1;
+    private int shownSpeed = -1;
+
+    private PlayerMotor player;
 
     private void OnEnable()
     {
@@ -39,13 +45,31 @@ public class LevelHud : MonoBehaviour
     // Dil değişince bir sonraki karede tüm yazılar yeniden yazılır
     private void ForceRefresh()
     {
-        shownTenths = shownDeaths = shownKumas = shownBelge = -1;
+        shownTenths = shownDeaths = shownKumas = shownBelge = shownSpeed = -1;
+    }
+
+    private void Start()
+    {
+        player = FindFirstObjectByType<PlayerMotor>();
+
+        // Test sahnesi (bölüm koşusu yok): süre/ölüm/Kumaş/Belge anlamsız, sadece hız gösterilir
+        if (LevelRun.Current == null)
+        {
+            timeText.gameObject.SetActive(false);
+            deathsText.gameObject.SetActive(false);
+            fabricText.gameObject.SetActive(false);
+            documentText.gameObject.SetActive(false);
+        }
     }
 
     private void Update()
     {
         LevelRun run = LevelRun.Current;
-        if (run == null) return;
+        if (run == null)
+        {
+            RefreshSpeed();
+            return;
+        }
 
         if (run.IsFinished)
         {
@@ -76,6 +100,18 @@ public class LevelHud : MonoBehaviour
             shownBelge = belge;
             documentText.text = Loc.Format("hud.document", belge, run.BelgeTotal);
         }
+        RefreshSpeed();
+    }
+
+    private void RefreshSpeed()
+    {
+        if (speedText == null || player == null) return;
+
+        // İleri (yatay) hız; düşüş hızı sayılmaz. Tam sayı: her karede titreyip değişmesin
+        int speed = Mathf.RoundToInt(Mathf.Abs(player.Velocity.x));
+        if (speed == shownSpeed) return;
+        shownSpeed = speed;
+        speedText.text = Loc.Format("hud.speed", speed);
     }
 
     public static string FormatTime(float seconds)

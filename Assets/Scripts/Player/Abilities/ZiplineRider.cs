@@ -33,6 +33,13 @@ public class ZiplineRider : MonoBehaviour
     [Tooltip("İmleç hızının sönümlenmesi. Büyük = daha kontrollü.")]
     [SerializeField] private float damping = 1.5f;
 
+    [Header("Eğilme")]
+    [Tooltip("Denge çubuğunun ucunda karakterin X ekseninde eğildiği en büyük açı (derece). Eğilme, imlecin merkezden uzaklığıyla orantılıdır (orta = düz, uçlar = ±bu açı).")]
+    [SerializeField] private float balanceTiltAngle = 25f;
+
+    [Tooltip("Eğilmeye girip çıkma yumuşaklığı (sn). Büyük değer = daha yavaş.")]
+    [SerializeField] private float balanceTiltSmoothTime = 0.08f;
+
     // Sürüş başladı/bitti (görsel bar buna bağlı)
     public event Action<bool> RidingChanged;
     // Denge imlecinin konumu: -1 (sol uç) .. 1 (sağ uç)
@@ -53,6 +60,9 @@ public class ZiplineRider : MonoBehaviour
     private float noiseSign = 1f;
     private float nextNoiseTime;
     private bool jumpOffRequested;
+    // Eğilme görseli: şu anki açı ve yumuşatma hızı
+    private float tilt;
+    private float tiltVelocity;
 
     // Ayrılınan hat, oyuncu yere inene kadar tekrar tutunulamaz (zıplayarak çıkış gerçek bir çıkış olsun)
     private Zipline blockedZipline;
@@ -156,6 +166,27 @@ public class ZiplineRider : MonoBehaviour
         motor.SetVelocity((target - motor.Position) / dt);
     }
 
+    // Eğilme görseli (X ekseni): denge imleci merkezden ne kadar uzaksa o kadar yatar (uçlarda ±balanceTiltAngle);
+    // hattan çıkınca düze döner
+    private void Update()
+    {
+        float target;
+        if (IsRiding) target = Mathf.Clamp(balanceOffset, -1f, 1f) * balanceTiltAngle;
+        else if (tilt != 0f) target = 0f;
+        else return;
+
+        tilt = Mathf.SmoothDamp(tilt, target, ref tiltVelocity, balanceTiltSmoothTime);
+        if (!IsRiding && Mathf.Abs(tilt) < 0.1f) tilt = 0f;
+        motor.SetTiltX(tilt);
+    }
+
+    private void ResetTilt()
+    {
+        tilt = 0f;
+        tiltVelocity = 0f;
+        motor.SetTiltX(0f);
+    }
+
     private void UpdateBalance(float dt)
     {
         if (Time.time >= nextNoiseTime)
@@ -191,5 +222,6 @@ public class ZiplineRider : MonoBehaviour
     private void OnDied()
     {
         if (IsRiding) StopRiding();
+        if (tilt != 0f) ResetTilt();
     }
 }

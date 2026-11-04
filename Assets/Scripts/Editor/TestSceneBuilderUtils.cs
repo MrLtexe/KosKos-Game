@@ -97,6 +97,13 @@ public static class TestSceneBuilderUtils
         Debug.Log($"[KosKos] Test sahnesi oluşturuldu: {path}");
     }
 
+    // Bölüm arayüzü: LevelUI prefab'ı (yoksa önce üretilir). Test sahnelerinde sadece hız görünür, duraklatma kapalı
+    public static void AddLevelUI(Scene scene)
+    {
+        UiPrefabBuilder.EnsurePrefabs();
+        PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(UiPrefabBuilder.LevelUiPath), scene);
+    }
+
     public static int LevelMask(Layers layers) => (1 << layers.Ground) | (1 << layers.Phaseable);
 
     // Prefab varsa onu kullanır (sanat/ayar değişiklikleri korunur), yoksa oluşturup kaydeder
@@ -172,6 +179,8 @@ public static class TestSceneBuilderUtils
         player.AddComponent<JetBagAbility>();
         player.AddComponent<MagBootsAbility>();
         var tint = player.AddComponent<ChargeTintPlaceholder>();
+        player.AddComponent<DashTrailPlaceholder>();
+        player.AddComponent<DeathExplosionPlaceholder>();
         player.AddComponent<PlayerLoadout>();
 
         SetField(inputReader, "actions", actions);

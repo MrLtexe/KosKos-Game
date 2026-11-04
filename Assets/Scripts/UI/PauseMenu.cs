@@ -72,7 +72,8 @@ public class PauseMenu : MonoBehaviour
     private void OnPausePressed(InputAction.CallbackContext _)
     {
         LevelRun run = LevelRun.Current;
-        if (run != null && run.IsFinished) return;
+        // Test sahnelerinde (bölüm koşusu yok) duraklatma yok: sahneler Build Settings'te değil, "Yeniden başla" çalışmaz
+        if (run == null || run.IsFinished) return;
         // Tuş atanırken Esc sadece atamayı iptal eder, menüyü açıp kapatmaz
         if (KeyRebinder.BlocksPause) return;
 

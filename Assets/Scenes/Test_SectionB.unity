@@ -1902,10 +1902,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 4074305189404432311, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
-      propertyPath: 'stepBoosts.Array.data[2]'
-      value: 12
-      objectReference: {fileID: 0}
     - target: {fileID: 8550790304787940975, guid: 56765718ebfd25448a493e48c993aea6, type: 3}
       propertyPath: m_Name
       value: Player

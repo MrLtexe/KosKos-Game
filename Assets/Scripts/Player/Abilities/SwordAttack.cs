@@ -29,16 +29,37 @@ public class SwordAttack : MonoBehaviour
     [SerializeField] private LayerMask hitLayers = ~0;
 
     [Header("Geçici Görsel")]
-    [Tooltip("GEÇİCİ: isabet kutusu aktifken gösterilen görsel. Animasyon gelince kaldırılacak. Boş bırakılabilir.")]
+    [Tooltip("GEÇİCİ: vuruş görseli. Oyunda bunun üstünde hilal şeklinde beyaz bir kılıç izi çizilir. Animasyon gelince kaldırılacak. Boş bırakılabilir.")]
     [SerializeField] private Renderer hitboxVisual;
+
+    [Tooltip("Kılıç izinin yarıçapı (birim, oyuncu merkezinden).")]
+    [SerializeField] private float slashRadius = 1.7f;
+
+    [Tooltip("Kılıç izinin ortadaki en kalın yeri (birim); uçlara doğru sivrilir.")]
+    [SerializeField] private float slashThickness = 0.5f;
+
+    [Tooltip("Kılıç izinin başladığı açı (derece; 0 = tam ön, 90 = tam üst).")]
+    [SerializeField] private float slashStartAngle = -80f;
+
+    [Tooltip("Kılıç izinin bittiği açı (derece; negatif = önün altı).")]
+    [SerializeField] private float slashEndAngle = 100f;
+
+    [Tooltip("Kılıç izinin toplam görünme süresi (sn): önce ucu süpürür, sonra kuyruğu yetişip kaybolur.")]
+    [SerializeField] private float slashDuration = 0.2f;
+
+    [Tooltip("Kılıç izinin rengi.")]
+    [SerializeField] private Color slashColor = Color.white;
+
+    [Tooltip("Kılıç izinin derinliği (Z). Negatif = karakterin önünde (kameraya yakın).")]
+    [SerializeField] private float slashDepth = -0.3f;
 
     public bool IsAttacking { get; private set; }
     // Savuşturma açık mı? Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
     public bool ParryUnlocked { get; set; }
 
-    // Görselin kapsülün arkasında kalması için Z kaydırması
-    private const float VisualDepthOffset = 0.6f;
     private const int MaxHitsPerQuery = 16;
+    // Kılıç izi yayındaki dilim sayısı (fazlası = daha pürüzsüz eğri)
+    private const int SlashSegments = 24;
 
     private readonly Collider[] overlapBuffer = new Collider[MaxHitsPerQuery];
     private readonly List<ISwordHittable> hitThisSwing = new List<ISwordHittable>(MaxHitsPerQuery);
@@ -56,6 +77,13 @@ public class SwordAttack : MonoBehaviour
     private float attackStartTime = float.NegativeInfinity;
     private bool dashRefreshedThisSwing;
 
+    // Kılıç izi: her karede yeniden çizilen hilal ağı ve görünmeye başladığı an
+    private Mesh slashMesh;
+    private Material slashMaterial;
+    private readonly Vector3[] slashVertices = new Vector3[(SlashSegments + 1) * 2];
+    private float slashStartTime = float.NegativeInfinity;
+    private bool slashVisible;
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -65,19 +93,93 @@ public class SwordAttack : MonoBehaviour
         dash = GetComponent<DashAbility>();
         sling = GetComponent<SlingAbility>();
         jetBag = GetComponent<JetBagAbility>();
+        SetupSlash();
         SetVisual(false);
+    }
+
+    private void OnDestroy()
+    {
+        if (slashMesh != null) Destroy(slashMesh);
+        if (slashMaterial != null) Destroy(slashMaterial);
+    }
+
+    // Görsel nesnenin dörtgen ağı yerine hilal ağı konur (prefab değişmez, sadece oyunda)
+    private void SetupSlash()
+    {
+        if (hitboxVisual == null || !hitboxVisual.TryGetComponent(out MeshFilter filter)) return;
+
+        slashMesh = new Mesh { name = "SwordSlash" };
+        slashMesh.MarkDynamic();
+        slashMesh.vertices = slashVertices;
+        var triangles = new int[SlashSegments * 6];
+        for (int i = 0; i < SlashSegments; i++)
+        {
+            int outer = i * 2, inner = outer + 1, nextOuter = outer + 2, nextInner = outer + 3;
+            triangles[i * 6 + 0] = outer;
+            triangles[i * 6 + 1] = nextOuter;
+            triangles[i * 6 + 2] = inner;
+            triangles[i * 6 + 3] = inner;
+            triangles[i * 6 + 4] = nextOuter;
+            triangles[i * 6 + 5] = nextInner;
+        }
+        slashMesh.triangles = triangles;
+        filter.sharedMesh = slashMesh;
+
+        // Işıksız düz renk, iki yüzü de görünür (yayın dönüş yönünden bağımsız)
+        slashMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+        slashMaterial.color = slashColor;
+        slashMaterial.SetFloat("_Cull", 0f);
+        hitboxVisual.sharedMaterial = slashMaterial;
+        hitboxVisual.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        hitboxVisual.receiveShadows = false;
+
+        Transform t = hitboxVisual.transform;
+        t.localRotation = Quaternion.identity;
+        t.localScale = Vector3.one;
+    }
+
+    private void Update()
+    {
+        if (!slashVisible) return;
+
+        float t = (Time.time - slashStartTime) / slashDuration;
+        if (t >= 1f)
+        {
+            SetVisual(false);
+            return;
+        }
+        UpdateSlashMesh(t);
+    }
+
+    // Uç (baş) önce yayı süpürür, kuyruk arkadan yetişir; kalınlık yayın ortasında en fazla, uçlarda sıfır (hilal)
+    private void UpdateSlashMesh(float t)
+    {
+        float head = Mathf.Clamp01(t / 0.5f);
+        float tail = Mathf.Clamp01((t - 0.35f) / 0.65f);
+
+        for (int i = 0; i <= SlashSegments; i++)
+        {
+            float u = Mathf.Lerp(tail, head, (float)i / SlashSegments);
+            float angle = Mathf.Lerp(slashStartAngle, slashEndAngle, u) * Mathf.Deg2Rad;
+            float thickness = slashThickness * Mathf.Sin(u * Mathf.PI);
+            var direction = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f);
+            slashVertices[i * 2] = direction * slashRadius;
+            slashVertices[i * 2 + 1] = direction * (slashRadius - thickness);
+        }
+        slashMesh.vertices = slashVertices;
+        slashMesh.RecalculateBounds();
     }
 
     private void OnEnable()
     {
         input.SwordPressed += OnSwordPressed;
-        death.Died += EndAttack;
+        death.Died += OnDied;
     }
 
     private void OnDisable()
     {
         input.SwordPressed -= OnSwordPressed;
-        death.Died -= EndAttack;
+        death.Died -= OnDied;
     }
 
     private void OnSwordPressed()
@@ -107,15 +209,8 @@ public class SwordAttack : MonoBehaviour
             return;
         }
 
-        if (elapsed < activeTime)
-        {
-            DetectHits();
-        }
-        else
-        {
-            // İsabet kutusu kapandı; vuruşun geri kalanı sadece bekleme
-            SetVisual(false);
-        }
+        // İsabet kutusu sadece ilk activeTime boyunca açık; görsel kendi süresinde (slashDuration) kaybolur
+        if (elapsed < activeTime) DetectHits();
     }
 
     private void DetectHits()
@@ -144,24 +239,32 @@ public class SwordAttack : MonoBehaviour
         }
     }
 
+    // Vuruş süresi bitince sadece vuruş biter; kılıç izi kendi süresinde kaybolur
     private void EndAttack()
     {
         IsAttacking = false;
+    }
+
+    // Ölümde iz anında kaybolur
+    private void OnDied()
+    {
+        EndAttack();
         SetVisual(false);
     }
 
     private void SetVisual(bool visible)
     {
+        slashVisible = visible && slashMesh != null;
         if (hitboxVisual == null) return;
 
-        if (visible)
+        if (slashVisible)
         {
-            // Görsel her zaman güncel isabet kutusu ayarlarıyla aynı yerde/boyutta olsun
-            Transform t = hitboxVisual.transform;
-            t.localPosition = hitboxOffset + Vector3.forward * VisualDepthOffset;
-            t.localScale = new Vector3(hitboxSize.x, hitboxSize.y, 1f);
+            // Hilal oyuncu merkezinin etrafında çizilir
+            hitboxVisual.transform.localPosition = new Vector3(0f, 0f, slashDepth);
+            slashStartTime = Time.time;
+            UpdateSlashMesh(0f);
         }
-        hitboxVisual.enabled = visible;
+        hitboxVisual.enabled = slashVisible;
     }
 
     // Scene görünümünde isabet kutusunu gösterir (ayar yaparken kolaylık)
