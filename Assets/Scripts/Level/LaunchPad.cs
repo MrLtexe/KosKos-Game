@@ -1,6 +1,6 @@
 using UnityEngine;
 
-// Fırlatma alanı (D.5): oyuncu üstüne gelince otomatik olarak yukarı fırlatır ve bir ek hava zıplaması verir.
+// Fırlatma alanı (D.5): oyuncu üstüne gelince otomatik olarak yukarı fırlatır ve çift zıplamayı yeniler (açıksa).
 // Fırlatınca plaka yay gibi "boing" yapar: yukarı uzayıp sönümlenerek sallanır (alt kenarı yerinde kalır).
 // GEÇİCİ: fırlatılan oyuncunun arkasında uçak kondens izi gibi kalın beyaz bir çizgi bırakılır.
 [RequireComponent(typeof(Collider))]
@@ -143,7 +143,7 @@ public class LaunchPad : MonoBehaviour
         if (Time.time < boingStartTime + 0.3f) return;
 
         motor.Jump(launchHeight);
-        jump.GrantBonusAirJump();
+        jump.RefreshAirJumpAfterLaunch();
         StartBoing();
         StartContrails(body, death);
     }

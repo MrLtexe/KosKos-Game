@@ -34,6 +34,7 @@ public static class KeyRebinder
         new Entry("action.hook", "Hook"),
         new Entry("action.jetBag", "JetBag"),
         new Entry("action.magBoots", "MagBoots"),
+        new Entry("action.down", "Down"),
         new Entry("action.balanceLeft", "Balance", "negative"),
         new Entry("action.balanceRight", "Balance", "positive")
     };

@@ -64,6 +64,18 @@ public class PlayerDeath : MonoBehaviour
         StartCoroutine(RespawnRoutine());
     }
 
+    // TEST: ölmeden, bekleme olmadan aktif güvenli alanda yeniden doğar (bölüm atlama/tekrar).
+    // Kontrol kilidi sıfırlanınca yetenekler (kanca, zipline, sapan...) kendini kapatır; yeniden doğuş olayları da çalışır
+    public void RespawnNow()
+    {
+        if (IsDead) return;
+
+        motor.ResetState(SafeZone.CurrentSpawnPosition);
+        motor.SetVelocity(Vector3.zero);
+        Respawned?.Invoke();
+        AnyPlayerRespawned?.Invoke();
+    }
+
     private IEnumerator RespawnRoutine()
     {
         yield return new WaitForSeconds(respawnDelay);

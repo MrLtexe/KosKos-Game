@@ -1,64 +1,15 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using U = TestSceneBuilderUtils;
 
-// Tek tıkla fırlatma alanı + zipline + sapan test sahnesini üretir: KosKos > Build Section D Traversal Test Scene.
-// Sahne her seferinde yeniden oluşturulur; elle düzenlemeyin.
+// Geçiş mekaniklerinin (fırlatma alanı, zipline, sapan, yolculuk baloncuğu; Section D) ortak sahne parçaları:
+// test dünyası ve prototip bölümler kullanır.
+// (Eski ayrı "Section D Traversal Test Scene" sahnesi kaldırıldı; testler KosKos > Build Test World ile yapılır.)
 public static class SectionDTraversalTestSceneBuilder
 {
-    private const string ScenePath = "Assets/Scenes/Test_SectionD_Traversal.unity";
-
     private static readonly Color PadColor = new Color(0.2f, 0.85f, 0.3f);
     private static readonly Color CableColor = new Color(0.2f, 0.2f, 0.2f);
     private static readonly Color SlingColor = new Color(0.55f, 0.8f, 1f);
-
-    [MenuItem("KosKos/Build Section D Traversal Test Scene")]
-    private static void Build()
-    {
-        if (!U.BeginScene(out Scene scene, out InputActionAsset actions, out U.Layers layers)) return;
-
-        Transform level = new GameObject("Level").transform;
-
-        // Fırlatma alanı bölümü: 6.5 yüksek duvar sadece fırlatma + ek hava zıplaması ile aşılır
-        U.Ground(level, layers.Ground, "Ground_A", -5f, 48f);
-        LaunchPadAt(level, "LaunchPad", 15f);
-        U.Block(level, layers.Ground, "PadWall", 24f, 0f, 1f, 6.5f);
-
-        // Zipline bölümü: 48-90 arası boşluk; hat zeminin üstünde bitiyor (90'dan sonra)
-        U.Ground(level, layers.Ground, "Ground_B", 90f, 180f);
-        ZiplineBetween(level, "Zipline", new Vector3(48f, 4f, 0f), new Vector3(92f, 3f, 0f));
-
-        // Sapan bölümü: havadaki alan ve 8 yüksek duvar
-        SlingZoneAt(level, "SlingZone", new Vector3(120f, 4f, 0f), tutorial: true);
-        U.Block(level, layers.Ground, "SlingWall", 128f, 0f, 1f, 8f);
-
-        // Yolculuk baloncuğu 1: eğri rota ile 180-198 arası boşluğun üstünden taşır, ileri-yukarı fırlatır
-        BubbleAt(level, "TravelBubble_Curve", new Vector3(152f, 1.5f, 0f),
-            new[] { new Vector3(165f, 6f, 0f), new Vector3(180f, 8f, 0f), new Vector3(194f, 5f, 0f) },
-            new Vector3(1f, 0.4f, 0f), 16f);
-        U.Ground(level, layers.Ground, "Ground_C", 198f, 250f);
-
-        // Yolculuk baloncuğu 2: kısa rota, sonra neredeyse dik yukarı fırlatıp yüksek bir kenara çıkarır
-        BubbleAt(level, "TravelBubble_Up", new Vector3(215f, 1.5f, 0f),
-            new[] { new Vector3(222f, 3f, 0f), new Vector3(230f, 4f, 0f) },
-            new Vector3(0.4f, 1f, 0f), 24f);
-        U.Block(level, layers.Ground, "BubbleLedge", 234f, 6.5f, 20f, 1f);
-
-        U.SafeZoneAt(level, "SafeZone_Start", 0f, true);
-        U.SafeZoneAt(level, "SafeZone_Zipline", 40f, false);
-        U.SafeZoneAt(level, "SafeZone_Sling", 95f, false);
-        U.SafeZoneAt(level, "SafeZone_Bubble", 140f, false);
-        U.SafeZoneAt(level, "SafeZone_Bubble2", 205f, false);
-        U.KillZone(level, 130f, 400f);
-
-        GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
-        U.AddFollowCamera(player);
-        U.AddLevelUI(scene);
-
-        U.SaveScene(scene, ScenePath);
-    }
 
     // Yolculuk baloncuğu: kökte giriş tetiği, çocuklarda rota noktaları (boş nesneler), fırlatma yönü ve hareket eden görsel.
     // ejectTowards: son noktadan fırlatma yönü (birim vektör gibi; nesne son noktadan bu kadar uzağa konur)

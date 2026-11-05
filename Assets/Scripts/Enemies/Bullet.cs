@@ -103,7 +103,12 @@ public class Bullet : MonoBehaviour, ISwordHittable
         if (body == null || !body.TryGetComponent(out PlayerDeath death)) return;
 
         // Uygun atılma sırasında mermi oyuncunun içinden geçer ve uçmaya devam eder
-        if (body.TryGetComponent(out DashAbility dash) && CanDodge(dash)) return;
+        if (body.TryGetComponent(out DashAbility dash) && CanDodge(dash))
+        {
+            // Sıyrılganlıklı atılmayla geçildiyse karakter kısa süre yarı saydam görünür
+            if (dash.IsPhaseDodging) dash.MarkPhasedThrough();
+            return;
+        }
 
         death.Die();
         Despawn();
@@ -121,6 +126,8 @@ public class Bullet : MonoBehaviour, ISwordHittable
 
         reflected = true;
         spawnTime = Time.time;
+        // Kılıç izinin mermiye bakan yerinde küçük kıvılcım
+        ParrySparkPlaceholder.Play(source.SlashPointToward(rb.position));
         return true;
     }
 

@@ -239,6 +239,20 @@ public class SwordAttack : MonoBehaviour
         }
     }
 
+    // Kılıç izinin (hilalin) verilen noktaya bakan yerindeki nokta: savuşturma kıvılcımı karakterin değil izin üstünde çıksın.
+    // Yön izin açı aralığına sıkıştırılır; nokta hilalin ortasındaki çizgide ve izle aynı derinliktedir.
+    // Hesap karakterin kendi uzayında yapılır: iz karakterle birlikte döner (tavanda ters, atılmada eğik)
+    public Vector3 SlashPointToward(Vector3 worldPosition)
+    {
+        Vector3 local = transform.InverseTransformPoint(worldPosition);
+        float angle = local.x * local.x + local.y * local.y > 0.0001f ? Mathf.Atan2(local.y, local.x) * Mathf.Rad2Deg : 0f;
+        angle = Mathf.Clamp(angle, Mathf.Min(slashStartAngle, slashEndAngle), Mathf.Max(slashStartAngle, slashEndAngle));
+
+        float radius = slashRadius - slashThickness * 0.5f;
+        float radians = angle * Mathf.Deg2Rad;
+        return transform.TransformPoint(new Vector3(Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius, slashDepth));
+    }
+
     // Vuruş süresi bitince sadece vuruş biter; kılıç izi kendi süresinde kaybolur
     private void EndAttack()
     {

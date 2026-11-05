@@ -17,14 +17,19 @@ public class PlayerInputReader : MonoBehaviour
     public event Action HookReleased;
     public event Action MagBootsPressed;
 
-    // Sürekli okunan değerler (event değil): zipline dengesi (-1..1), sapan nişanı (fare ekran konumu), jet-çanta ve kanca tuşları basılı mı
+    // Sürekli okunan değerler (event değil): zipline dengesi (-1..1), sapan nişanı (fare ekran konumu), jet-çanta, kanca ve aşağı tuşları basılı mı
     public float BalanceInput => balanceAction.ReadValue<float>();
     public Vector2 AimScreenPosition => aimAction.ReadValue<Vector2>();
+    // Jet-çanta tuşu duvar koşusunda "yukarı" olarak da kullanılır
     public bool JetBagHeld => jetBagAction.IsPressed();
     public bool HookHeld => hookAction.IsPressed();
+    // Duvar koşusunda aşağı inme
+    public bool DownHeld => downAction.IsPressed();
 
     // Ekrandaki tuş ipuçları için güncel tuş adları (oyuncu Ayarlar'dan değiştirebilir)
     public string JumpKeyName => jumpAction.GetBindingDisplayString(0);
+    // Tuş dosyası (test sahnesi tuş listesi gibi göstergeler için)
+    public InputActionAsset Actions => actions;
     public string BalanceLeftKeyName => balanceAction.GetBindingDisplayString(KeyRebinder.BindingIndex(balanceAction, "negative"));
     public string BalanceRightKeyName => balanceAction.GetBindingDisplayString(KeyRebinder.BindingIndex(balanceAction, "positive"));
 
@@ -38,6 +43,7 @@ public class PlayerInputReader : MonoBehaviour
     private InputAction hookAction;
     private InputAction jetBagAction;
     private InputAction magBootsAction;
+    private InputAction downAction;
 
     private void Awake()
     {
@@ -53,6 +59,7 @@ public class PlayerInputReader : MonoBehaviour
         hookAction = playerMap.FindAction("Hook", true);
         jetBagAction = playerMap.FindAction("JetBag", true);
         magBootsAction = playerMap.FindAction("MagBoots", true);
+        downAction = playerMap.FindAction("Down", true);
     }
 
     private void OnEnable()

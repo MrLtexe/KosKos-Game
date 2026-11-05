@@ -181,6 +181,8 @@ public static class TestSceneBuilderUtils
         var tint = player.AddComponent<ChargeTintPlaceholder>();
         player.AddComponent<DashTrailPlaceholder>();
         player.AddComponent<DeathExplosionPlaceholder>();
+        player.AddComponent<JumpDustPlaceholder>();
+        player.AddComponent<MagBootsFxPlaceholder>();
         player.AddComponent<PlayerLoadout>();
 
         SetField(inputReader, "actions", actions);

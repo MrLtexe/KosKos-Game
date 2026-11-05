@@ -41,6 +41,12 @@ public class PlayerMotor : MonoBehaviour
     [Tooltip("Duvar koşusu sırasında karakterin X ekseninde eğilme açısı (derece). Duvara tutunma hissi için.")]
     [SerializeField] private float wallRunTilt = -10f;
 
+    [Tooltip("Duvar koşusunda yukarı/aşağı tırmanma hızı (birim/sn).")]
+    [SerializeField] private float wallClimbSpeed = 5f;
+
+    [Tooltip("Tavana çevrilme (baş aşağı) ve duvar koşusu eğilmesine yumuşak geçiş süresi (sn). 0 = anında.")]
+    [SerializeField] private float surfaceRotationTime = 0.15f;
+
     public event Action Landed;
     public event Action LeftGround;
     public event Action HitObstacle;
@@ -61,6 +67,8 @@ public class PlayerMotor : MonoBehaviour
     public bool IsCeilingMode => upSign < 0f;
     // Duvar koşusu: yerçekimi yok, zeminde sayılır
     public bool IsWallRunning { get; private set; }
+    // Duvar koşusunda tırmanma: 1 = yukarı, -1 = aşağı, 0 = yükseklik sabit (Manyetik Botlar ayarlar)
+    public float WallClimbInput { get; set; }
     public LayerMask GroundLayers => groundLayers;
 
     private Rigidbody rb;
@@ -71,6 +79,9 @@ public class PlayerMotor : MonoBehaviour
     // Yeteneklerin verdiği ek X ve Z eğimi (derece)
     private float tiltX;
     private float tiltZ;
+    // Yüzey dönüşü (X ekseni, derece): normal 0, duvar koşusu wallRunTilt, tavan 180. Hedefe yumuşakça gider
+    private float surfaceAngle;
+    private float surfaceAngleVelocity;
     private float upSign = 1f;
 
     // Zemin taramasının başlangıcını biraz yukarı alır; başlangıçta zemine gömülü kalmasın diye
@@ -114,8 +125,10 @@ public class PlayerMotor : MonoBehaviour
 
         UpdateHorizontalSpeed(Time.fixedDeltaTime);
 
-        // Duvar koşusunda yerçekimi yok; tavan modunda yerçekimi ters yönde
-        float verticalVelocity = IsWallRunning ? 0f : rb.linearVelocity.y - upSign * gravity * Time.fixedDeltaTime;
+        // Duvar koşusunda yerçekimi yok, dikey hız tırmanmadan gelir; tavan modunda yerçekimi ters yönde
+        float verticalVelocity = IsWallRunning
+            ? Mathf.Clamp(WallClimbInput, -1f, 1f) * wallClimbSpeed
+            : rb.linearVelocity.y - upSign * gravity * Time.fixedDeltaTime;
         rb.linearVelocity = new Vector3(currentSpeed, verticalVelocity, 0f);
     }
 
@@ -291,13 +304,31 @@ public class PlayerMotor : MonoBehaviour
         ApplyRotation();
     }
 
-    // Karakterin dönüşü yüzey moduna göre: tavan = baş aşağı, duvar koşusu = hafif eğik, normal = düz; üstüne ek X/Z eğimi
+    // Yüzey moduna göre hedef açı: tavan = baş aşağı (180), duvar koşusu = hafif eğik, normal = düz
+    private float SurfaceTargetAngle => IsCeilingMode ? 180f : IsWallRunning ? wallRunTilt : 0f;
+
+    // Yüzey dönüşü her karede hedefe yumuşakça ilerler (tavana çevrilme anında değil, kısa bir dönüşle olur).
+    // Hep X ekseni etrafında döner: baş aşağıyken de yüz ileri bakar
+    private void Update()
+    {
+        float target = SurfaceTargetAngle;
+        if (Mathf.Approximately(surfaceAngle, target)) return;
+
+        surfaceAngle = surfaceRotationTime > 0f
+            ? Mathf.SmoothDamp(surfaceAngle, target, ref surfaceAngleVelocity, surfaceRotationTime)
+            : target;
+        if (Mathf.Abs(surfaceAngle - target) < 0.1f)
+        {
+            surfaceAngle = target;
+            surfaceAngleVelocity = 0f;
+        }
+        ApplyRotation();
+    }
+
+    // Karakterin dönüşü: yüzey açısı (X) + yeteneklerin ek X/Z eğimi
     private void ApplyRotation()
     {
-        Quaternion rotation = IsCeilingMode ? Quaternion.Euler(180f, 0f, 0f)
-            : IsWallRunning ? Quaternion.Euler(wallRunTilt, 0f, 0f)
-            : Quaternion.identity;
-        rotation *= Quaternion.Euler(tiltX, 0f, tiltZ);
+        Quaternion rotation = Quaternion.Euler(surfaceAngle, 0f, 0f) * Quaternion.Euler(tiltX, 0f, tiltZ);
         rb.rotation = rotation;
         transform.rotation = rotation;
     }
@@ -331,5 +362,9 @@ public class PlayerMotor : MonoBehaviour
         rb.excludeLayers = 0;
         ExitSurfaceModes();
         IsGrounded = false;
+        // Yeniden doğuşta dönüş beklenmeden anında düz
+        surfaceAngle = SurfaceTargetAngle;
+        surfaceAngleVelocity = 0f;
+        ApplyRotation();
     }
 }

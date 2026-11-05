@@ -17,6 +17,15 @@ public class SafeZone : MonoBehaviour
     // Yeni bir güvenli alana ulaşıldı (başlangıç alanı hariç). Bölüm akışı toplanabilirleri güvenceye almak için dinler.
     public static event Action<SafeZone> Activated;
 
+    // Şu an aktif güvenli alan (test sahnesi bölüm atlama göstergesi için)
+    public static SafeZone Current => current;
+
+    // TEST: bölüm atlamada geri dönmeye izin verir ("sadece ileri" kuralını atlar). Oyun kodunda kullanılmamalı
+    public static void ForceCurrent(SafeZone zone)
+    {
+        current = zone;
+    }
+
     public static Vector3 CurrentSpawnPosition
     {
         get

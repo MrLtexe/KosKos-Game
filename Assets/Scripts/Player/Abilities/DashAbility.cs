@@ -21,6 +21,9 @@ public class DashAbility : MonoBehaviour
     [Tooltip("Sıyrılganlık ile içinden geçilebilen layer'lar (Phaseable). Kalın duvarlar bu layer'da OLMAMALI.")]
     [SerializeField] private LayerMask phaseableLayers;
 
+    [Tooltip("Duvarın ya da merminin içinden geçince karakterin yarı saydam kaldığı süre (sn). Geçiş çok kısa sürdüğü için görünsün diye.")]
+    [SerializeField] private float phaseVisualHold = 0.15f;
+
     [Header("Mermiden Kaçış")]
     [Tooltip("Atılma bittikten sonra mermilerden kaçış korumasının devam ettiği ek süre (sn). Yelpaze mermilerinin hepsini tek atılmayla geçebilmek için.")]
     [SerializeField] private float dodgeGraceTime = 0.1f;
@@ -43,6 +46,8 @@ public class DashAbility : MonoBehaviour
     public bool IsDodging => IsDashing || Time.time < dodgeGraceEndTime;
     // Sıyrılganlıklı kaçış: sıyrılganlıklı atılma sürüyor ya da yeni bitti (dron mermileri)
     public bool IsPhaseDodging => isPhasing || (lastDashPhased && Time.time < dodgeGraceEndTime);
+    // Şu an bir duvarın ya da düşman mermisinin içinden geçiliyor mu (görsel: karakter yarı saydam)
+    public bool IsPhasingThrough => Time.time < phaseVisualUntil;
 
     private PlayerMotor motor;
     private PlayerInputReader input;
@@ -54,6 +59,7 @@ public class DashAbility : MonoBehaviour
     private float dashEndTime;
     private float dodgeGraceEndTime = float.NegativeInfinity;
     private float lastGroundDashTime = float.NegativeInfinity;
+    private float phaseVisualUntil = float.NegativeInfinity;
     // Zipline'dan düşünce yere inene kadar atılma yok
     private bool blockedUntilLanded;
 
@@ -123,8 +129,11 @@ public class DashAbility : MonoBehaviour
     {
         if (!IsDashing) return;
 
+        bool insideWall = isPhasing && motor.OverlapsAny(phaseableLayers);
+        if (insideWall) MarkPhasedThrough();
+
         // Süre bittiğinde hâlâ bir duvarın içindeysek çıkana kadar atılmaya devam (sıkışmayı önler)
-        if (Time.fixedTime >= dashEndTime && !(isPhasing && motor.OverlapsAny(phaseableLayers)))
+        if (Time.fixedTime >= dashEndTime && !insideWall)
         {
             EndDash();
             return;
@@ -187,6 +196,12 @@ public class DashAbility : MonoBehaviour
         SetTilt(0f);
     }
 
+    // Duvarın ya da düşman mermisinin içinden geçildi: karakter kısa süre yarı saydam görünür (mermiler de çağırır)
+    public void MarkPhasedThrough()
+    {
+        phaseVisualUntil = Time.time + phaseVisualHold;
+    }
+
     // Kılıç havada bir şeye vurduğunda da çağrılır
     public void RefreshAirDash()
     {
@@ -210,8 +225,9 @@ public class DashAbility : MonoBehaviour
         // Atılma sırasında ölürsek kilit takılı kalmasın
         if (IsDashing) EndDash();
         ResetTilt();
-        // Ölümde ek koruma süresi taşınmaz
+        // Ölümde ek koruma süresi ve saydamlık taşınmaz
         dodgeGraceEndTime = float.NegativeInfinity;
+        phaseVisualUntil = float.NegativeInfinity;
     }
 
     private void OnRespawned()

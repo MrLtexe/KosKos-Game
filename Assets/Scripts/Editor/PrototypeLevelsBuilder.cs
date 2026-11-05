@@ -101,6 +101,9 @@ public static class PrototypeLevelsBuilder
 
         GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
         U.AddFollowCamera(player);
+        // Bölümlerde gökyüzü yerine düz siyah arka plan (ortam ışığı yine gökyüzünden gelir)
+        Camera.main.clearFlags = CameraClearFlags.SolidColor;
+        Camera.main.backgroundColor = Color.black;
 
         // Bölüm arayüzü: LevelUI prefab'ı (yoksa önce üretilir); düzeni prefab'da düzenlenir, tüm bölümlere yansır
         U.AddLevelUI(scene);
@@ -128,10 +131,12 @@ public static class PrototypeLevelsBuilder
         // Boşluk 90-97 (zıplama + havada atılma)
         U.Ground(p, g, "Ground_C", 97f, 170f);
         U.SafeZoneAt(p, "SafeZone_2", 102f, false);
+        // Bu bölümde çift zıplama yok: fırlatma alanı tek başına 4 yüksek çıkıntının üstüne çıkarır.
+        // Alansız koşulursa çıkıntının önüne çarpılır (ölüm)
         DT.LaunchPadAt(p, "LaunchPad", 112f);
-        U.Block(p, g, "PadWall", 122f, 0f, 1f, 6.5f);
-        // Belge: fırlatma + ek zıplamanın tepesinde, kolay yolun biraz dışında
-        Belge(p, id, new Vector3(119.5f, 9.5f, 0f));
+        U.Block(p, g, "PadLedge", 118f, 0f, 17f, 4f);
+        // Belge: fırlatma yayının tepesinde
+        Belge(p, id, new Vector3(117f, 7.5f, 0f));
         // İlk bölüm: yumuşak silah (uzun uyarı, yavaş mermi, geçince ateş yok); fırlatma alanı inişinden uzakta
         DE.Turret(p, l, "Turret_Dodge", 150f, DE.TurretBullet(l),
             windUp: 0.7f, aimLock: 0.35f, bulletSpeed: 14f, passTolerance: 0.3f);

@@ -1,14 +1,12 @@
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using U = TestSceneBuilderUtils;
 
-// Tek tıkla düşman + savuşturma test sahnesini üretir: KosKos > Build Section D Enemies Test Scene.
-// Sahne her seferinde yeniden oluşturulur; mermi prefab'ları sadece yoksa oluşturulur.
+// Düşmanların (tavan silahı, dron; Section D) ortak sahne parçaları: test dünyası ve prototip bölümler kullanır.
+// Mermi prefab'ları sadece yoksa oluşturulur.
+// (Eski ayrı "Section D Enemies Test Scene" sahnesi kaldırıldı; testler KosKos > Build Test World ile yapılır.)
 public static class SectionDEnemiesTestSceneBuilder
 {
-    private const string ScenePath = "Assets/Scenes/Test_SectionD_Enemies.unity";
     private const string BulletFolder = "Assets/Prefabs/Bullets";
     private const string TurretBulletPath = BulletFolder + "/TurretBullet.prefab";
     private const string DroneBulletPath = BulletFolder + "/DroneBullet.prefab";
@@ -27,39 +25,6 @@ public static class SectionDEnemiesTestSceneBuilder
 
     internal static Bullet DroneBullet(U.Layers layers) =>
         GetOrCreateBulletPrefab(DroneBulletPath, layers, false, Bullet.DodgeRule.PhaseDash, DroneBulletColor);
-
-    [MenuItem("KosKos/Build Section D Enemies Test Scene")]
-    private static void Build()
-    {
-        if (!U.BeginScene(out Scene scene, out InputActionAsset actions, out U.Layers layers)) return;
-
-        Bullet turretBullet = TurretBullet(layers);
-        Bullet droneBullet = DroneBullet(layers);
-
-        Transform level = new GameObject("Level").transform;
-        U.Ground(level, layers.Ground, "Ground", -5f, 200f);
-        U.SafeZoneAt(level, "SafeZone_Start", 0f, true);
-        U.SafeZoneAt(level, "SafeZone_Parry", 75f, false);
-        U.SafeZoneAt(level, "SafeZone_Drones", 135f, false);
-        U.KillZone(level, 100f, 300f);
-
-        // Tavan silahları: hedef önü atış; kaçış (atılma/zıplama) ve savuşturma denemesi
-        Turret(level, layers, "Turret_Dodge", 30f, turretBullet);
-        Turret(level, layers, "Turret_Parry", 60f, turretBullet);
-
-        // Dronlar havada: altından geçilebilir; zıplayıp kılıçla vur (atılma yenilenir) ya da sıyrılganlık ile mermilerden kaç
-        Drone(level, layers, "Drone_Hover", 100f, 4.5f, droneBullet, 10f);
-        // Devriye: 115 ile 125 arasında gidip gelir
-        Drone(level, layers, "Drone_Patrol", 115f, 5f, droneBullet, 10f, 10f);
-        // Uzun menzil: mermiler oyuncuya önden gelir, böylece atılma ile içlerinden geçmek denenebilir
-        Drone(level, layers, "Drone_Phase", 160f, 5f, droneBullet, 12f);
-
-        GameObject player = U.SpawnPlayer(layers, actions, new Vector3(0f, 1.05f, 0f));
-        U.AddFollowCamera(player);
-        U.AddLevelUI(scene);
-
-        U.SaveScene(scene, ScenePath);
-    }
 
     // Varsayılan değerler sert tavan silahıdır; ilk bölümler gibi kolay yerlerde daha yumuşak değerler verilebilir
     internal static void Turret(Transform parent, U.Layers layers, string name, float x, Bullet bulletPrefab,

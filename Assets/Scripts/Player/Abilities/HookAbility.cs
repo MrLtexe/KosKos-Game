@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-// Kanca (C): E basılı tutulunca öndeki en yakın kanca noktasına tutunur.
+// Kanca (C): E basılı tutulunca öndeki en yakın kanca noktasına kanca fırlatılır; uç noktaya varınca tutunur
+// (Sekiro gibi: önce ip uçar, sonra çeker). Fırlatılan kanca E bırakılsa da noktaya varır.
 // Nokta başın üstündeyse sallanma (sarkaç), oyuncuyla aynı hizadaysa çekilme.
 // Sallanmada ileri hız giriş hızı + bonus, hiç düşmez (geri sallanma yok); E bırakılınca ileri fırlatılır.
 // E yay sonundan (varsayılan 90°) önce bırakılmazsa oyuncu patlar (ölüm).
@@ -17,6 +19,9 @@ public class HookAbility : MonoBehaviour
 
     [Tooltip("Oyuncu merkezine göre bu yükseklik aralığındaki (±) noktalar çekilme noktasıdır; daha yukarıdakiler sallanma, daha aşağıdakiler kullanılamaz (birim).")]
     [SerializeField] private float pullHeightTolerance = 1f;
+
+    [Tooltip("Fırlatılan kancanın uçuş hızı (birim/sn). Uç noktaya varınca tutunulur. Büyük = daha çabuk tutunur.")]
+    [SerializeField] private float hookFlySpeed = 60f;
 
     [Header("Sallanma")]
     [Tooltip("İp uzunluğunun alt sınırı (birim).")]
@@ -46,6 +51,19 @@ public class HookAbility : MonoBehaviour
     [Tooltip("Çekilmenin bitiş noktasına bu kadar yaklaşınca çekilme biter (birim).")]
     [SerializeField] private float pullArriveDistance = 0.5f;
 
+    [Header("Eğilme")]
+    [Tooltip("Çekilme (yer kancası) sırasında karakterin Z ekseninde eğildiği açı (derece).")]
+    [SerializeField] private float pullTiltAngle = -20f;
+
+    [Tooltip("Çekilme eğilmesine girme yumuşaklığı (sn).")]
+    [SerializeField] private float pullTiltSmoothTime = 0.06f;
+
+    [Tooltip("Sallanmaya tutununca karakterin düz duruştan ip açısına yumuşakça dönme süresi (sn).")]
+    [SerializeField] private float swingTiltBlendTime = 0.12f;
+
+    [Tooltip("Kanca bırakılınca karakterin düz duruşa yumuşakça dönme süresi (sn).")]
+    [SerializeField] private float releaseTiltReturnTime = 0.15f;
+
     // Kanca açık mı? Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
     public bool Unlocked { get; set; }
     public bool IsHooked => mode != Mode.None;
@@ -55,12 +73,28 @@ public class HookAbility : MonoBehaviour
     // Sallanma açısı (derece, 0 = noktanın tam altı) ve patlama sınırı; açı göstergesi için
     public float SwingAngleDegrees => angle * Mathf.Rad2Deg;
     public float MaxSwingAngle => Mathf.Min(maxSwingAngle, 90f);
+    // Kanca uçuyor mu (henüz tutunmadı); ip görseli için hedef nokta ve uçuşun ne kadarı geçti (0..1)
+    public bool IsFiring => isFiring;
+    public Vector3 FireTargetPosition => fireTarget;
+    public float FireProgress01 => isFiring && fireDuration > 0f ? Mathf.Clamp01((Time.time - fireStartTime) / fireDuration) : 0f;
+
+    // Kanca noktaya tutundu (parçacık görseli için): tutunulan nokta
+    public event Action<Vector3> Attached;
 
     private enum Mode { None, Swing, Pull }
 
     private PlayerMotor motor;
     private PlayerInputReader input;
     private PlayerDeath death;
+    // İsteğe bağlı: atılma başlarsa eğilmeyi atılma yönetir
+    private DashAbility dash;
+
+    // Eğilme görseli: şu anki açı ve yumuşatma hızı
+    private float tilt;
+    private float tiltVelocity;
+    // Sallanmaya tutunma anı ve o andaki açı: ip açısına geçiş buradan başlar
+    private float swingTiltBlendStart;
+    private float tiltAtAttach;
 
     private Mode mode;
     private HookPoint target;
@@ -72,35 +106,83 @@ public class HookAbility : MonoBehaviour
     private float swingSpeed;
     private bool releaseRequested;
 
+    // Uçuş: hedef nokta, başlangıç zamanı ve süresi (mesafe / uçuş hızı)
+    private bool isFiring;
+    private Vector3 fireTarget;
+    private float fireStartTime;
+    private float fireDuration;
+
     private void Awake()
     {
         motor = GetComponent<PlayerMotor>();
         input = GetComponent<PlayerInputReader>();
         death = GetComponent<PlayerDeath>();
+        dash = GetComponent<DashAbility>();
     }
 
     private void OnEnable()
     {
         input.HookReleased += OnHookReleased;
         death.Died += OnDied;
+        death.Respawned += OnRespawned;
     }
 
     private void OnDisable()
     {
         input.HookReleased -= OnHookReleased;
         death.Died -= OnDied;
+        death.Respawned -= OnRespawned;
         if (IsHooked) EndHook();
+        isFiring = false;
         SetTarget(null);
     }
 
     private void Update()
     {
+        UpdateTilt();
+
         // Tutunmuşken hedef değişmez
         if (IsHooked) return;
+
+        // Kanca uçarken hedef değişmez; uç varınca tutunulur
+        if (isFiring)
+        {
+            UpdateFiring();
+            return;
+        }
+
         SetTarget(CanStart() ? FindTarget() : null);
 
         // E basılı tutuldukça denenir: nokta menzile girmeden biraz erken basılan E de çalışır
-        if (target != null && input.HookHeld) TryHook();
+        if (target != null && input.HookHeld) StartFiring();
+    }
+
+    private void StartFiring()
+    {
+        fireTarget = target.Position;
+        fireTarget.z = 0f;
+        Vector3 toTarget = fireTarget - motor.Position;
+        toTarget.z = 0f;
+        fireDuration = hookFlySpeed > 0f ? toTarget.magnitude / hookFlySpeed : 0f;
+        fireStartTime = Time.time;
+        isFiring = true;
+    }
+
+    private void UpdateFiring()
+    {
+        // Uçarken ölünür ya da başka bir yetenek (atılma, zipline...) kontrolü alırsa kanca iptal
+        if (target == null || !CanStart())
+        {
+            isFiring = false;
+            return;
+        }
+
+        if (Time.time - fireStartTime < fireDuration) return;
+
+        isFiring = false;
+        TryHook();
+        // Uçarken E bırakıldıysa tutunur tutunmaz bırakılır (kısa basış önceki gibi çalışır)
+        if (IsHooked && !input.HookHeld) releaseRequested = true;
     }
 
     private bool CanStart() => Unlocked && !death.IsDead && !motor.IsControlLocked;
@@ -157,12 +239,16 @@ public class HookAbility : MonoBehaviour
             ropeLength = Mathf.Clamp(offset.magnitude, minRopeLength, maxRopeLength);
             angle = Mathf.Atan2(offset.x, -offset.y);
             swingSpeed = Mathf.Max(motor.Velocity.x, motor.RunSpeed) + swingEntryBonus;
+            // Eğilme görseli: bulunulan açıdan ip açısına yumuşak geçiş başlar
+            tiltAtAttach = tilt;
+            swingTiltBlendStart = Time.time;
             mode = Mode.Swing;
         }
         else
         {
             mode = Mode.Pull;
         }
+        Attached?.Invoke(anchor);
     }
 
     // Bırakma bir sonraki fizik adımında yapılır
@@ -258,9 +344,61 @@ public class HookAbility : MonoBehaviour
         motor.ReleaseControl(this);
     }
 
+    // Eğilme görseli (Z ekseni):
+    // sallanmada karakter ipe göre döner (başı hep noktaya bakar, açı = sallanma açısı); tutununca bu açıya yumuşakça geçer.
+    // Çekilmede pullTiltAngle'a eğilir. Kanca bırakılınca yumuşakça düz duruşa döner.
+    // Dönüş sırasında atılma başlarsa eğilmeyi atılma yönetir; burası yazmayı bırakır.
+    private void UpdateTilt()
+    {
+        if (mode == Mode.Swing)
+        {
+            // Tutunma anındaki açıdan ip açısına yumuşak geçiş (sonra ipi birebir izler)
+            float blend = swingTiltBlendTime > 0f ? Mathf.Clamp01((Time.time - swingTiltBlendStart) / swingTiltBlendTime) : 1f;
+            tilt = Mathf.Lerp(tiltAtAttach, SwingAngleDegrees, Mathf.SmoothStep(0f, 1f, blend));
+            tiltVelocity = 0f;
+        }
+        else if (mode == Mode.Pull)
+        {
+            tilt = Mathf.SmoothDamp(tilt, pullTiltAngle, ref tiltVelocity, pullTiltSmoothTime);
+        }
+        else if (tilt != 0f)
+        {
+            if (dash != null && dash.IsDashing)
+            {
+                tilt = 0f;
+                tiltVelocity = 0f;
+                return;
+            }
+            tilt = Mathf.SmoothDamp(tilt, 0f, ref tiltVelocity, releaseTiltReturnTime);
+            if (Mathf.Abs(tilt) < 0.1f) tilt = 0f;
+        }
+        else
+        {
+            return;
+        }
+        motor.SetTiltZ(tilt);
+    }
+
+    private void ResetTilt()
+    {
+        if (tilt == 0f) return;
+        tilt = 0f;
+        tiltVelocity = 0f;
+        motor.SetTiltZ(0f);
+    }
+
+    // Yeniden doğuşta (test sahnesi bölüm atlama dahil) uçan kanca eski noktaya tutunmasın, eğim kalmasın
+    private void OnRespawned()
+    {
+        isFiring = false;
+        ResetTilt();
+    }
+
     private void OnDied()
     {
         if (IsHooked) EndHook();
+        isFiring = false;
+        ResetTilt();
         SetTarget(null);
     }
 }

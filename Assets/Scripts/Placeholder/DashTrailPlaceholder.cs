@@ -1,6 +1,8 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 // GEÇİCİ: atılma parçacıkları. Atılma başında kısa bir patlama, atılma boyunca arkada kalan ince hız çizgileri.
+// Sıyrılganlıklı atılmayla bir duvarın ya da düşman mermisinin içinden geçerken karakter kısa süre yarı saydam olur.
 // Parçacık sistemi oyunda koddan kurulur (prefab'da ayar gerekmez). Gerçek efekt gelince bu bileşen silinecek.
 [RequireComponent(typeof(DashAbility))]
 public class DashTrailPlaceholder : MonoBehaviour
@@ -26,6 +28,11 @@ public class DashTrailPlaceholder : MonoBehaviour
     [Tooltip("Çizginin kalınlığı (birim).")]
     [SerializeField] private float streakThickness = 0.06f;
 
+    [Header("Sıyrılganlık")]
+    [Tooltip("Duvarın ya da merminin içinden geçerken karakterin görünürlüğü (0 = görünmez, 1 = tam opak).")]
+    [Range(0f, 1f)]
+    [SerializeField] private float phaseOpacity = 0.35f;
+
     private DashAbility dash;
     private ParticleSystem particles;
     private Material material;
@@ -33,9 +40,14 @@ public class DashTrailPlaceholder : MonoBehaviour
     // Saniyedeki çizgi sayısının küsuratı bir sonraki kareye taşınır
     private float emitCarry;
 
+    // Karakterin gövde görseli (kapsül); renk/kostüm de aynı malzeme kopyasını kullanır
+    private Renderer bodyRenderer;
+    private bool isTransparent;
+
     private void Awake()
     {
         dash = GetComponent<DashAbility>();
+        bodyRenderer = GetComponent<Renderer>();
         CreateParticles();
     }
 
@@ -93,6 +105,9 @@ public class DashTrailPlaceholder : MonoBehaviour
 
     private void Update()
     {
+        bool phasing = dash.IsPhasingThrough;
+        if (phasing != isTransparent) SetTransparent(phasing);
+
         bool dashing = dash.IsDashing;
         if (dashing)
         {
@@ -108,5 +123,45 @@ public class DashTrailPlaceholder : MonoBehaviour
             if (count > 0) particles.Emit(count);
         }
         wasDashing = dashing;
+    }
+
+    // URP Lit malzemesini saydam/opak arasında çevirir; renk (kostüm, şarj rengi) korunur, sadece alfa değişir
+    private void SetTransparent(bool on)
+    {
+        isTransparent = on;
+        if (bodyRenderer == null) return;
+
+        // .material: karakterin kendi kopyası (ChargeTintPlaceholder ile aynı kopya)
+        Material body = bodyRenderer.material;
+        if (on)
+        {
+            body.SetFloat("_Surface", 1f);
+            body.SetFloat("_Blend", 0f);
+            body.SetOverrideTag("RenderType", "Transparent");
+            body.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            body.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            body.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            body.SetFloat("_DstBlendAlpha", (float)BlendMode.OneMinusSrcAlpha);
+            body.SetFloat("_ZWrite", 0f);
+            body.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            body.renderQueue = (int)RenderQueue.Transparent;
+        }
+        else
+        {
+            body.SetFloat("_Surface", 0f);
+            body.SetOverrideTag("RenderType", "Opaque");
+            body.SetFloat("_SrcBlend", (float)BlendMode.One);
+            body.SetFloat("_DstBlend", (float)BlendMode.Zero);
+            body.SetFloat("_SrcBlendAlpha", (float)BlendMode.One);
+            body.SetFloat("_DstBlendAlpha", (float)BlendMode.Zero);
+            body.SetFloat("_ZWrite", 1f);
+            body.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            // -1: shader'ın kendi sırası (opak)
+            body.renderQueue = -1;
+        }
+
+        Color color = body.color;
+        color.a = on ? phaseOpacity : 1f;
+        body.color = color;
     }
 }

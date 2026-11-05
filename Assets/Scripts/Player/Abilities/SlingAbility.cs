@@ -2,7 +2,8 @@ using System;
 using UnityEngine;
 
 // Sapan (D.7): havadayken sapan alanına girince zaman yavaşlar, ok fareyi takip eder (öndeki 180°).
-// Space ile hemen, ya da yavaşlama bitince otomatik olarak okun yönüne fırlatılır. Yavaşlarken sadece zıplama çalışır.
+// Space ile hemen, ya da yavaşlama bitince otomatik olarak okun yönüne fırlatılır (görselde küçülen halka bu süreyi gösterir).
+// Yavaşlarken sadece zıplama çalışır.
 // Motor'dan önce çalışır
 [DefaultExecutionOrder(-10)]
 [RequireComponent(typeof(PlayerMotor), typeof(PlayerInputReader), typeof(PlayerDeath))]
@@ -32,8 +33,14 @@ public class SlingAbility : MonoBehaviour
     public event Action<bool> SlingActiveChanged;
     // Nişan yönü (normalize, XY düzleminde, öndeki 180°)
     public event Action<Vector3> AimChanged;
+    // Fırlatıldı: true = süre dolunca otomatik (halka küçülüp bitti), false = tuşla erken fırlatma
+    public event Action<bool> Launched;
 
     public bool IsSlinging { get; private set; }
+    // Yavaşlamanın ne kadarı geçti (0 = yeni girildi, 1 = otomatik fırlatma anı); halka görseli için
+    public float SlowProgress01 => IsSlinging && slowDuration > 0f
+        ? Mathf.Clamp01(1f - (slowEndRealTime - Time.unscaledTime) / slowDuration)
+        : 0f;
     // İçinde bulunulan sapan alanı (ipucu görseli için); sapan yokken null
     public SlingZone CurrentZone => currentZone;
 
@@ -124,9 +131,13 @@ public class SlingAbility : MonoBehaviour
         }
 
         UpdateAim();
-        if (launchRequested || Time.unscaledTime >= slowEndRealTime)
+        if (launchRequested)
         {
-            Launch();
+            Launch(false);
+        }
+        else if (Time.unscaledTime >= slowEndRealTime)
+        {
+            Launch(true);
         }
     }
 
@@ -180,7 +191,7 @@ public class SlingAbility : MonoBehaviour
         AimChanged?.Invoke(aimDirection);
     }
 
-    private void Launch()
+    private void Launch(bool automatic)
     {
         Vector3 velocity = aimDirection * launchSpeed;
         lastZone = currentZone;
@@ -189,6 +200,7 @@ public class SlingAbility : MonoBehaviour
         motor.Launch(velocity);
         // Fırlatmayı tetikleyen Space basışı, hızlı bir inişte ayrıca yer zıplaması yapmasın
         jump.ClearBufferedJump();
+        Launched?.Invoke(automatic);
     }
 
     private void EndSling()

@@ -1202,6 +1202,8 @@ GameObject:
   - component: {fileID: 7747137792940635670}
   - component: {fileID: 3141592653589793238}
   - component: {fileID: 2718281828459045235}
+  - component: {fileID: 1618033988749894848}
+  - component: {fileID: 3605551275463989293}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -1557,6 +1559,44 @@ MonoBehaviour:
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0.5, b: 0, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
+--- !u!114 &3605551275463989293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 264e9b12a1fccc1498e5d780c189b101, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MagBootsFxPlaceholder
+  pressRingCount: 20
+  pressRingSpeed: 4
+  pressColor: {r: 0.3, g: 0.7, b: 1, a: 1}
+  pullSparkRate: 70
+  sparkColorA: {r: 0.35, g: 0.75, b: 1, a: 1}
+  sparkColorB: {r: 0.85, g: 0.95, b: 1, a: 1}
+--- !u!114 &1618033988749894848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee453e7d502ebd949a32426252ada716, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::JumpDustPlaceholder
+  dustCount: 10
+  dustColorA: {r: 0.78, g: 0.75, b: 0.7, a: 1}
+  dustColorB: {r: 0.55, g: 0.52, b: 0.5, a: 1}
+  dustSpeed: {x: 2, y: 4}
+  dustSize: 0.3
+  ringCount: 16
+  ringColor: {r: 0.85, g: 0.95, b: 1, a: 1}
+  ringSpeed: 4
 --- !u!114 &2718281828459045235
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1652,6 +1692,12 @@ MonoBehaviour:
   arrowLength: 1.5
   arrowWidth: 0.12
   arrowColor: {r: 0.3, g: 0.9, b: 1, a: 1}
+  ringGap: 1
+  ringWidth: 0.06
+  ringColor: {r: 0.85, g: 0.4, b: 0.95, a: 1}
+  burstCount: 30
+  burstRingCount: 32
+  burstColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &4849646560294962034
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1666,7 +1712,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HookRopePlaceholder
   rope: {fileID: 1758735257943850974}
   ropeWidth: 0.05
-  ropeColor: {r: 0.9, g: 0.8, b: 0.5, a: 1}
+  ropeColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
 --- !u!114 &7747137792940635670
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -14,7 +14,8 @@
                 { "name": "Aim", "type": "Value", "id": "a1b2c3d4-0006-4000-8000-000000000006", "expectedControlType": "Vector2", "processors": "", "interactions": "", "initialStateCheck": true },
                 { "name": "Hook", "type": "Button", "id": "a1b2c3d4-0007-4000-8000-000000000007", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
                 { "name": "JetBag", "type": "Button", "id": "a1b2c3d4-0008-4000-8000-000000000008", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
-                { "name": "MagBoots", "type": "Button", "id": "a1b2c3d4-0009-4000-8000-000000000009", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
+                { "name": "MagBoots", "type": "Button", "id": "a1b2c3d4-0009-4000-8000-000000000009", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false },
+                { "name": "Down", "type": "Button", "id": "a1b2c3d4-0011-4000-8000-000000000011", "expectedControlType": "Button", "processors": "", "interactions": "", "initialStateCheck": false }
             ],
             "bindings": [
                 { "name": "", "id": "b1b2c3d4-0001-4000-8000-000000000001", "path": "<Keyboard>/space", "interactions": "", "processors": "", "groups": "", "action": "Jump", "isComposite": false, "isPartOfComposite": false },
@@ -27,7 +28,8 @@
                 { "name": "", "id": "b1b2c3d4-0008-4000-8000-000000000008", "path": "<Mouse>/position", "interactions": "", "processors": "", "groups": "", "action": "Aim", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "b1b2c3d4-0009-4000-8000-000000000009", "path": "<Keyboard>/e", "interactions": "", "processors": "", "groups": "", "action": "Hook", "isComposite": false, "isPartOfComposite": false },
                 { "name": "", "id": "b1b2c3d4-0010-4000-8000-000000000010", "path": "<Keyboard>/w", "interactions": "", "processors": "", "groups": "", "action": "JetBag", "isComposite": false, "isPartOfComposite": false },
-                { "name": "", "id": "b1b2c3d4-0011-4000-8000-000000000011", "path": "<Keyboard>/q", "interactions": "", "processors": "", "groups": "", "action": "MagBoots", "isComposite": false, "isPartOfComposite": false }
+                { "name": "", "id": "b1b2c3d4-0011-4000-8000-000000000011", "path": "<Keyboard>/q", "interactions": "", "processors": "", "groups": "", "action": "MagBoots", "isComposite": false, "isPartOfComposite": false },
+                { "name": "", "id": "b1b2c3d4-0013-4000-8000-000000000013", "path": "<Keyboard>/s", "interactions": "", "processors": "", "groups": "", "action": "Down", "isComposite": false, "isPartOfComposite": false }
             ]
         },
         {

@@ -81,8 +81,9 @@ public static class Loc
         { "action.sword", new[] { "Sword", "Kılıç" } },
         { "action.boost", new[] { "Boost Charge", "Boost Şarjı" } },
         { "action.hook", new[] { "Hook", "Kanca" } },
-        { "action.jetBag", new[] { "Jet-Bag", "Jet-Çanta" } },
+        { "action.jetBag", new[] { "Jet-Bag / Wall Up", "Jet-Çanta / Duvarda Yukarı" } },
         { "action.magBoots", new[] { "Magnetic Boots", "Manyetik Botlar" } },
+        { "action.down", new[] { "Wall Down", "Duvarda Aşağı" } },
         { "action.balanceLeft", new[] { "Balance Left", "Denge Sol" } },
         { "action.balanceRight", new[] { "Balance Right", "Denge Sağ" } },
 
