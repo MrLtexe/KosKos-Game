@@ -247,7 +247,6 @@ public class DialogueSystem : MonoBehaviour
     /// </summary>
     public void Skip()
     {
-        // Kapanış animasyonu oynuyorsa hemen tamamla
         if (isClosing)
         {
             if (activeTransitionSequence != null && activeTransitionSequence.IsActive())
@@ -259,7 +258,6 @@ public class DialogueSystem : MonoBehaviour
 
         if (!isDialogueActive) return;
 
-        // Geçiş animasyonu oynuyorsa anında tamamla
         if (isTransitioning)
         {
             if (activeTransitionSequence != null && activeTransitionSequence.IsActive())
@@ -313,7 +311,7 @@ public class DialogueSystem : MonoBehaviour
             lastSpeaker = line.speaker;
             isTransitioning = true;
 
-            AnimateSpeakerEnter(currentUI, otherUI, openDuration, () =>
+            AnimateFirstSpeakerEnter(currentUI, otherUI, openDuration, () =>
             {
                 isTransitioning = false;
                 StartTypewriter(currentUI, line);
@@ -330,6 +328,7 @@ public class DialogueSystem : MonoBehaviour
         }
         else
         {
+            // Konuşmacı değişti: Eski konuşmacı soluklaşır, yeni konuşmacı öne çıkar
             lastSpeaker = line.speaker;
             isTransitioning = true;
 
@@ -351,7 +350,7 @@ public class DialogueSystem : MonoBehaviour
 
     #region Geçiş Animasyon Koordinasyonu
 
-    private void AnimateSpeakerEnter(DialogueSpeakerUI incoming, DialogueSpeakerUI other, float duration, Action onComplete)
+    private void AnimateFirstSpeakerEnter(DialogueSpeakerUI incoming, DialogueSpeakerUI other, float duration, Action onComplete)
     {
         KillActiveTransition();
 
@@ -359,7 +358,7 @@ public class DialogueSystem : MonoBehaviour
 
         if (incoming != null)
         {
-            activeTransitionSequence = incoming.CreateEnterSequence(duration);
+            activeTransitionSequence = incoming.TransitionToActiveSpeaker(duration);
             activeTransitionSequence.OnComplete(() =>
             {
                 activeTransitionSequence = null;
@@ -377,18 +376,17 @@ public class DialogueSystem : MonoBehaviour
         KillActiveTransition();
 
         activeTransitionSequence = DOTween.Sequence().SetUpdate(true);
-        float exitDuration = duration * 0.65f;
-        float enterDuration = duration;
 
+        // Çıkan konuşmacı: Avatarı soluklaşıp arka plana geçer, kutusu kapanır
         if (outgoing != null)
         {
-            activeTransitionSequence.Append(outgoing.CreateExitSequence(exitDuration));
+            activeTransitionSequence.Join(outgoing.TransitionToInactiveSpeaker(duration));
         }
 
+        // Gelen konuşmacı: Avatarı öne çıkarak parlar, kutusu açılır
         if (incoming != null)
         {
-            Sequence enterSeq = incoming.CreateEnterSequence(enterDuration);
-            activeTransitionSequence.Insert(exitDuration * 0.35f, enterSeq);
+            activeTransitionSequence.Join(incoming.TransitionToActiveSpeaker(duration));
         }
 
         activeTransitionSequence.OnComplete(() =>
@@ -398,17 +396,21 @@ public class DialogueSystem : MonoBehaviour
         });
     }
 
-    private void AnimateClose(DialogueSpeakerUI activeUI, float duration, Action onComplete)
+    private void AnimateClose(float duration, Action onComplete)
     {
         KillActiveTransition();
 
-        if (activeUI == null)
+        activeTransitionSequence = DOTween.Sequence().SetUpdate(true);
+
+        if (playerUI != null)
         {
-            onComplete?.Invoke();
-            return;
+            activeTransitionSequence.Join(playerUI.PlayFullExitAnimation(duration));
+        }
+        if (npcUI != null)
+        {
+            activeTransitionSequence.Join(npcUI.PlayFullExitAnimation(duration));
         }
 
-        activeTransitionSequence = activeUI.CreateExitSequence(duration);
         activeTransitionSequence.OnComplete(() =>
         {
             activeTransitionSequence = null;
@@ -445,9 +447,7 @@ public class DialogueSystem : MonoBehaviour
         isDialogueActive = false;
         isClosing = true;
 
-        DialogueSpeakerUI activeUI = (!lastSpeaker.HasValue || lastSpeaker.Value == SpeakerType.Player) ? playerUI : npcUI;
-
-        AnimateClose(activeUI, closeDuration, () =>
+        AnimateClose(closeDuration, () =>
         {
             isClosing = false;
             lastSpeaker = null;
