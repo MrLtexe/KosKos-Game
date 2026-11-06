@@ -1,105 +1,40 @@
-Diyalog sistemi için hazırladığım mimari planı ve netleştirmemiz gereken noktaları aşağıda paylaşıyorum:
+Diyalog sistemi için hazırladığım mimari planı ve modüler yapılandırma detayları:
 
 ---
 
 ### 1. Veri Yapısı (Data Architecture)
-Diyalogların sahnelerden bağımsız olarak kolayca yönetilebilmesi, yeniden kullanılabilmesi ve kaydedilebilmesi için ScriptableObject yapısı en temiz çözümdür:
+Diyalogların sahnelerden bağımsız olarak kolayca yönetilebilmesi, yeniden kullanılabilmesi ve kaydedilebilmesi için ScriptableObject yapısı:
 
 * **`SpeakerType` (Enum):** `Player` ve `NPC` seçenekleri.
 * **`DialogueLine` (Serializable Class):**
   * `SpeakerType speaker`: Kimin konuştuğu.
-  * `string speakerName`: Konuşmacının adı (Örn: "KosKos", "Muhafız"). Boş bırakılırsa varsayılan atanabilir.
+  * `string speakerName`: Konuşmacının adı (Örn: "KosKos", "Muhafız"). Boş bırakılırsa varsayılan atanır.
   * `string dialogueText`: Ekrana yazdırılacak metin (`[TextArea(3, 5)]`).
-  * `Sprite customAvatar`: (Opsiyonel) O satıra özel yüz ifadesi/portre (kızgın, şaşkın vb.).
+  * `Sprite customAvatar`: (Opsiyonel) O satıra özel yüz ifadesi/portre.
   * `AudioClip voiceClip`: (Opsiyonel) Satıra özel seslendirme veya harf daktilo sesi.
 * **`DialogueData` (ScriptableObject):**
   * `List<DialogueLine> lines`: Sırayla oynatılacak diyalog listesi.
 
 ---
 
-### 2. UI ve Hiyerarşi Yönetimi
-Sahnede ([Test_DialogueSystem.unity](file:///c:/Users/Yunus/Documents/GitHub/KosKos-Game/Assets/Scenes/Test_DialogueSystem.unity)) oluşturduğunuz hiyerarşi birebir desteklenecektir:
+### 2. Modüler Mimari & Sorumluluk Ayrımı (Refactored)
+Sistem 3 temel parçaya bölünerek temiz, okunabilir ve genişletilebilir hale getirilmiştir:
 
-* **Referanslar:**
-  * **Player Paneli:** `IMG_Player`, `BG_DialoguePlayer`, `T_DialoguePlayer`, `T_PlayerName`
-  * **NPC Paneli:** `IMG_Npc`, `BG_DialogueNpc`, `T_DialogueNpc`, `T_NpcName`
-  * **Kök Canvas/Panel:** `C_Dialogue` (Diyalog yokken tamamen kapalı kalır).
-* **Görünürlük Kuralları:**
-  * `SpeakerType.Player` ise: NPC nesneleri (`IMG_Npc` ve `BG_DialogueNpc`) kapatılır, Player nesneleri açılır.
-  * `SpeakerType.NPC` ise: Player nesneleri kapatılır, NPC nesneleri açılır.
-  * Diyalog tamamen bittiğinde tüm diyalog UI'ı gizlenir.
-
----
-
-### 3. Daktilo (Typewriter) Efekti & Skip Mantığı
-* **TMP `maxVisibleCharacters` Yöntemi:** Metin doğrudan TextMeshPro bileşenine atanır ancak `maxVisibleCharacters` 0'dan toplam harf sayısına doğru bir Coroutine ile artırılır.
-  * *Avantajı:* Zengin metin etiketleri (`<color>`, `<b>` vb.) ve kelime kaymaları (line-wrap) bozulmadan akıcı yazılır.
-* **Skip Mantığı (`Dialogue` Map -> `Skip` Action):**
-  1. `Skip` basıldı ve **yazı henüz yazılıyorsa (`isTyping == true`)**: Coroutine durdurulur, `maxVisibleCharacters` anında metnin uzunluğuna eşitlenir (metin anında ekranda belirir), `isTyping = false` yapılır.
-  2. `Skip` basıldı ve **yazı zaten tamamlanmışsa (`isTyping == false`)**:
-     * Sırada başka diyalog satırı varsa bir sonraki satıra geçilir.
-     * Liste bittiyse diyalog sonlandırılır (`EndDialogue()`).
+1. **`DialogueSpeakerUI.cs` (View / Panel Yöneticisi):**
+   * `BG_DialoguePlayer` ve `BG_DialogueNpc` objelerinde çalışır.
+   * Avatar, isim, diyalog metni, CanvasGroup ve DOTween giriş/çıkış/punch animasyonlarını yönetir.
+   * Player ve NPC için aynı bileşen kullanılarak kod tekrarı (DRY) önlenmiştir.
+2. **`DialogueTypewriter.cs` (Daktilo Efekti & Ses):**
+   * Metinlerin TextMeshPro üzerinde harf harf yazılmasını, harf seslerini, pitch rastgeleliğini ve hızlı tamamlama mantığını yönetir.
+3. **`DialogueSystem.cs` (Controller / Orkestra Şefi):**
+   * Oyun akışını yönetir (`StartDialogue`, `Skip`, `EndDialogue`).
+   * Paneller (`DialogueSpeakerUI`), daktilo (`DialogueTypewriter`) ve input eşlemelerini koordine eder.
 
 ---
 
-### 4. Input System & Oyun Akışı Entegrasyonu
-* [KosKosControls.inputactions](file:///c:/Users/Yunus/Documents/GitHub/KosKos-Game/Assets/Input/KosKosControls.inputactions) içerisine **`Dialogue`** action map'i ve altına **`Skip`** action'ı tanımlanacak (Space, Sol Tık, Enter, Gamepad A/South gibi tuş atamalarıyla).
-* Diyalog başladığında:
-  * `Player` input haritası devre dışı bırakılır (oyuncunun diyalog sırasında zıplaması/saldırması engellenir).
-  * `Dialogue` input haritası aktif edilir.
-* Diyalog bittiğinde:
-  * `Dialogue` haritası kapatılıp tekrar `Player` haritası açılır.
-
----
-
-### 5. Ara Sahne ve Sahne Geçişleri Entegrasyonu
-* [DialogueSystem](file:///c:/Users/Yunus/Documents/GitHub/KosKos-Game/Assets/Scripts/Dialogue/DialogueSystem.cs) bir Singleton/Service olarak tasarlanır:
-  ```csharp
-  DialogueSystem.Instance.StartDialogue(DialogueData data, System.Action onComplete = null);
-  ```
-* Diyalog bittiğinde `onComplete` callback'i tetiklenerek sahne geçişi ([SceneFlow](file:///c:/Users/Yunus/Documents/GitHub/KosKos-Game/Assets/Scripts/Flow/SceneFlow.cs)), kamera geçişi veya animasyon başlatılabilir.
-
----
-
-### Tespit Ettiğim Sorular ve Netleştirilecek Konular
-
-1. **Diyalog Veri Girişi:**
-   * Diyalogları **ScriptableObject** dosyaları olarak mı oluşturmak istersiniz, yoksa doğrudan sahnedeki tetikleyici objelerin Inspector'ına liste olarak girmek mi? *(Önerim: ScriptableObject + istenirse sahneden override edebilme)*
-2. **Diyalog Sırasında Oyun Zamanı:**
-   * Diyalog esnasında oyun dünyası arka planda akmaya devam etmeli mi (animasyonlar vb. çalışsın ama karakter kontrolü kilitlensin), yoksa `Time.timeScale = 0` yapılarak oyun tamamen dondurulmalı mı?
-3. **Daktilo Ses Efekti:**
-   * Daktilo yazarken her harfte veya belirli aralıklarla çalan bir bip/daktilo tıkırtısı (audio clip) ekleyelim mi?
-4. **Input Actions:**
-   * Projenizde aktif kullanılan input dosyası [KosKosControls.inputactions](file:///c:/Users/Yunus/Documents/GitHub/KosKos-Game/Assets/Input/KosKosControls.inputactions) mıdır? `Dialogue` haritası ve `Skip` action'ını bu dosyaya ekleyelim mi?
-5. **Sahne Tetikleyicisi:**
-   * Diyalogları başlatmak için bir tetikleyici bileşene (örneğin alana girince açılan `DialogueTrigger` veya sahne başlar başlamaz/ara sahnede tetiklenen bir akış) ihtiyacınız var mı?
-
-Bu plan üzerindeki düşüncelerinizi ve yukarıdaki soruların yanıtlarını paylaşırsanız kodlamaya geçebiliriz.
-
-
----
-
-### 6. DOTween Geçiş ve Avatar Efektleri (Tamamlandı)
+### 3. DOTween Geçiş ve Avatar Efektleri
 * **Açılış (Enter / Open):**
-  * Konuşmacı kutusu (Player / NPC container) `alpha 0 -> 1`, `scale 0.88 -> 1.0` ve alttan hafif yukarı kayarak (`Ease.OutBack`) açılır.
-  * Aktif avatar (Player soldan, NPC sağdan) `alpha 0 -> 1`, `scale 0.82 -> 1.0` ve kenardan içeri doğru kayarak (`Ease.OutBack`) yaylanarak sahneye girer.
-* **Kapanış (Exit / Close):**
-  * Diyalog sonlandığında aktif kutu ve avatar hafif geriye doğru çekilerek (`Ease.InCubic`) ve `alpha -> 0` yapılarak kapanır; animasyon bitiminde arayüz gizlenir ve callback tetiklenir.
-* **Konuşmacı Değişimi (Speaker Switch):**
-  * Player -> NPC veya NPC -> Player geçişlerinde eski taraf kapanırken yeni taraf hafif zamanlama örtüşmesiyle (overlap) sahneye girer.
-* **Aynı Konuşmacı Devam Ederken (Micro Punch):**
-  * Kutu kapanıp açılmaz; avatar hafif bir konuşma tepkisi (punch scale bounce) vererek metin yazımına başlar.
-* **Zaman Dondurma Uyumluluğu:**
-  * Tüm geçişlerde `.SetUpdate(true)` kullanılarak `Time.timeScale = 0` olsa dahi akıcı şekilde çalışması sağlandı.
-* **Skip Duyarlılığı:**
-  * Geçiş esnasında oyuncu Skip tuşuna basarsa animasyon anında tamamlanarak daktilo yazımına geçilir (oyuncuyu bekletmez).
-
-
----
-
-### 6. DOTween Geçiş ve Avatar Efektleri (Tamamlandı)
-* **Açılış (Enter / Open):**
-  * Konuşmacı kutusu (Player / NPC container) `alpha 0 -> 1`, `scale 0.88 -> 1.0` ve alttan hafif yukarı kayarak (`Ease.OutBack`) açılır.
+  * Konuşmacı kutusu `alpha 0 -> 1`, `scale 0.88 -> 1.0` ve alttan hafif yukarı kayarak (`Ease.OutBack`) açılır.
   * Aktif avatar (Player soldan, NPC sağdan) `alpha 0 -> 1`, `scale 0.82 -> 1.0` ve kenardan içeri doğru kayarak (`Ease.OutBack`) yaylanarak sahneye girer.
 * **Kapanış (Exit / Close):**
   * Diyalog sonlandığında aktif kutu ve avatar hafif geriye doğru çekilerek (`Ease.InCubic`) ve `alpha -> 0` yapılarak kapanır; animasyon bitiminde arayüz gizlenir ve callback tetiklenir.

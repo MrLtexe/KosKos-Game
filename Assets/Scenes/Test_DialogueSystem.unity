@@ -155,7 +155,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 400, y: 100}
+  m_SizeDelta: {x: 700, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &106008960
 MonoBehaviour:
@@ -204,14 +204,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 66.15
+  m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -272,6 +272,7 @@ GameObject:
   - component: {fileID: 115102947}
   - component: {fileID: 115102946}
   - component: {fileID: 115102945}
+  - component: {fileID: 115102948}
   m_Layer: 5
   m_Name: C_Dialogue
   m_TagString: Untagged
@@ -376,7 +377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueTestTrigger
   startDialogue: 0
-  dialogueData: {fileID: 0}
+  dialogueData: {fileID: 11400000, guid: 27f90ca2c48d3a246827ddb00511f2ee, type: 2}
   testLines:
   - speaker: 0
     speakerName: KosKos
@@ -407,24 +408,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DialogueSystem
   dialogueRoot: {fileID: 115102940}
-  playerAvatar: {fileID: 1129169264}
-  playerContainer: {fileID: 1130592523}
-  playerDialogueText: {fileID: 106008960}
-  playerNameText: {fileID: 1106690155}
-  defaultPlayerAvatar: {fileID: 0}
-  defaultPlayerName: KosKos
-  npcAvatar: {fileID: 649771344}
-  npcContainer: {fileID: 483995159}
-  npcDialogueText: {fileID: 289350674}
-  npcNameText: {fileID: 1349173372}
-  defaultNpcAvatar: {fileID: 0}
-  defaultNpcName: NPC
-  typingSpeed: 0.03
-  audioSource: {fileID: 115102947}
-  typewriterSound: {fileID: 0}
-  randomizePitch: 1
-  pitchRange: {x: 0.92, y: 1.08}
-  soundFrequency: 1
+  playerUI: {fileID: 1130592528}
+  npcUI: {fileID: 483995164}
+  typewriter: {fileID: 115102948}
+  openDuration: 0.3
+  closeDuration: 0.22
+  switchDuration: 0.25
+  punchAvatarOnSameSpeaker: 1
   pauseTimeScale: 1
   inputActions: {fileID: 0}
   dialogueMapName: Dialogue
@@ -534,6 +524,24 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &115102948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 115102940}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb57a10ea79f6784b9265c7c7c0eecf2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueTypewriter
+  typingSpeed: 0.03
+  audioSource: {fileID: 115102947}
+  defaultTypewriterSound: {fileID: 0}
+  randomizePitch: 1
+  pitchRange: {x: 0.92, y: 1.08}
+  soundFrequency: 1
 --- !u!1 &214452994
 GameObject:
   m_ObjectHideFlags: 0
@@ -697,7 +705,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 400, y: 100}
+  m_SizeDelta: {x: 700, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &289350674
 MonoBehaviour:
@@ -746,14 +754,14 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 66.15
+  m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
@@ -811,6 +819,7 @@ GameObject:
   - component: {fileID: 483995162}
   - component: {fileID: 483995161}
   - component: {fileID: 483995163}
+  - component: {fileID: 483995164}
   m_Layer: 5
   m_Name: BG_DialogueNpc
   m_TagString: Untagged
@@ -889,6 +898,28 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &483995164
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 483995159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0098cd7866f52bc4bb76eb68ee8e61b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSpeakerUI
+  avatarImage: {fileID: 649771344}
+  nameText: {fileID: 1349173372}
+  dialogueText: {fileID: 289350674}
+  defaultAvatar: {fileID: 0}
+  defaultName: NPC
+  containerSlideOffsetY: -35
+  avatarSlideOffsetX: 80
+  avatarSlideDirection: 1
+  openEase: 27
+  closeEase: 8
 --- !u!1 &649771342
 GameObject:
   m_ObjectHideFlags: 0
@@ -900,6 +931,7 @@ GameObject:
   - component: {fileID: 649771343}
   - component: {fileID: 649771345}
   - component: {fileID: 649771344}
+  - component: {fileID: 649771346}
   m_Layer: 5
   m_Name: IMG_Npc
   m_TagString: Untagged
@@ -964,6 +996,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 649771342}
   m_CullTransparentMesh: 1
+--- !u!225 &649771346
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 649771342}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &880386591
 GameObject:
   m_ObjectHideFlags: 0
@@ -1140,8 +1184,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -1204,6 +1248,7 @@ GameObject:
   - component: {fileID: 1129169263}
   - component: {fileID: 1129169265}
   - component: {fileID: 1129169264}
+  - component: {fileID: 1129169266}
   m_Layer: 5
   m_Name: IMG_Player
   m_TagString: Untagged
@@ -1268,6 +1313,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1129169262}
   m_CullTransparentMesh: 1
+--- !u!225 &1129169266
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1129169262}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &1130592523
 GameObject:
   m_ObjectHideFlags: 0
@@ -1280,6 +1337,7 @@ GameObject:
   - component: {fileID: 1130592526}
   - component: {fileID: 1130592525}
   - component: {fileID: 1130592527}
+  - component: {fileID: 1130592528}
   m_Layer: 5
   m_Name: BG_DialoguePlayer
   m_TagString: Untagged
@@ -1358,6 +1416,28 @@ CanvasGroup:
   m_Interactable: 1
   m_BlocksRaycasts: 1
   m_IgnoreParentGroups: 0
+--- !u!114 &1130592528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1130592523}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0098cd7866f52bc4bb76eb68ee8e61b0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueSpeakerUI
+  avatarImage: {fileID: 1129169264}
+  nameText: {fileID: 1106690155}
+  dialogueText: {fileID: 106008960}
+  defaultAvatar: {fileID: 0}
+  defaultName: KosKos
+  containerSlideOffsetY: -35
+  avatarSlideOffsetX: 80
+  avatarSlideDirection: -1
+  openEase: 27
+  closeEase: 8
 --- !u!1 &1349173370
 GameObject:
   m_ObjectHideFlags: 0
@@ -1442,8 +1522,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18

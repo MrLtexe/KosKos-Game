@@ -1,15 +1,19 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 /// <summary>
 /// Diyalog sistemini Inspector'dan test etmek için tetikleyici script.
-/// 'startDialogue' kutucuğunu işaretlediğinizde veya sağ tıklayıp 'Start Dialogue Test' dediğinizde diyalog başlar.
+/// 'startDialogue' kutucuğunu işaretlediğinizde, 'T' tuşuna bastığınızda veya sağ tıklayıp 'Start Dialogue Test' dediğinizde diyalog başlar.
 /// </summary>
 public class DialogueTestTrigger : MonoBehaviour
 {
     [Header("Test Tetikleyici")]
     [Tooltip("Play modundayken bu kutucuğu işaretlediğinizde test diyaloğu başlar.")]
     [SerializeField] private bool startDialogue = false;
+
+    [Tooltip("Play modundayken T tuşuna basarak da diyalog başlatılsın mı?")]
+    [SerializeField] private bool enableKeyTrigger = true;
 
     [Header("Diyalog Kaynağı")]
     [Tooltip("Varsa oluşturduğunuz ScriptableObject (boş bırakılırsa aşağıdaki inline liste kullanılır)")]
@@ -20,7 +24,6 @@ public class DialogueTestTrigger : MonoBehaviour
 
     private void Reset()
     {
-        // Varsayılan örnek test konuşmaları
         testLines = new List<DialogueLine>
         {
             new DialogueLine
@@ -44,11 +47,27 @@ public class DialogueTestTrigger : MonoBehaviour
         };
     }
 
+    private void OnValidate()
+    {
+        // Inspector'da tıklandığı anda anında tetikler
+        if (startDialogue && Application.isPlaying)
+        {
+            startDialogue = false;
+            TriggerDialogue();
+        }
+    }
+
     private void Update()
     {
         if (startDialogue)
         {
             startDialogue = false;
+            TriggerDialogue();
+            return;
+        }
+
+        if (enableKeyTrigger && Keyboard.current != null && Keyboard.current.tKey.wasPressedThisFrame)
+        {
             TriggerDialogue();
         }
     }

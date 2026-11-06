@@ -16,10 +16,26 @@ MonoBehaviour:
   - speaker: 0
     speakerName: Egecan
     dialogueText: "Olamaz bu oyun bitmeyecek. Hemen ekibi aya\u011Fa kald\u0131rmal\u0131y\u0131m"
-    customAvatar: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+    customAvatar: {fileID: 183660156, guid: c880a5aea0da81d4d89f9024ed295d89, type: 3}
     voiceClip: {fileID: 0}
   - speaker: 1
     speakerName: Ekip
     dialogueText: "Egecan geliyor ka\xE7\u0131n."
-    customAvatar: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+    customAvatar: {fileID: -1888946838, guid: 75d754ac0d37cda40ab09d0857d4d758, type: 3}
+    voiceClip: {fileID: 0}
+  - speaker: 0
+    speakerName: Egecan
+    dialogueText: "Nerde bu amk \xE7ocuklar\u0131! Olamaz beni satt\u0131lar"
+    customAvatar: {fileID: -518429394, guid: c880a5aea0da81d4d89f9024ed295d89, type: 3}
+    voiceClip: {fileID: 0}
+  - speaker: 1
+    speakerName: Ekip
+    dialogueText: "Egecan\u0131 da iyi paraya okuttuk he"
+    customAvatar: {fileID: 1191359758, guid: 75d754ac0d37cda40ab09d0857d4d758, type: 3}
+    voiceClip: {fileID: 0}
+  - speaker: 0
+    speakerName: Egecan
+    dialogueText: "Ulan beni niye satt\u0131n\u0131z (AI B\xD6CEK V\u0130DEOSU EFEKT\u0130)
+      OROSPU \xC7OCUKLARI!"
+    customAvatar: {fileID: 1699483923, guid: b440a222e074a0d4faedc6553a4e7aad, type: 3}
     voiceClip: {fileID: 0}
