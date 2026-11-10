@@ -19,16 +19,20 @@ public static class SectionDEnemiesTestSceneBuilder
     // Dronun en düşük yüksekliği: süzülmede alçalsa bile yerdeki oyuncunun (tepesi y=2) üstünde kalır
     private const float MinDroneHeight = 4.5f;
 
-    // Diğer builder'lar (prototip bölümler) için hazır mermi prefab'ları
+    // Diğer builder'lar (prototip bölümler) için hazır mermi prefab'ları.
+    // Tavan silahı mermisi: savuşturulur; sıradan atılma korumaz (iyi zamanlanırsa mermi arkada kalır), sıyrılganlıkla içinden geçilir
     internal static Bullet TurretBullet(U.Layers layers) =>
-        GetOrCreateBulletPrefab(TurretBulletPath, layers, true, Bullet.DodgeRule.AnyDash, TurretBulletColor);
+        GetOrCreateBulletPrefab(TurretBulletPath, layers, true, Bullet.DodgeRule.PhaseDash, TurretBulletColor);
 
     internal static Bullet DroneBullet(U.Layers layers) =>
         GetOrCreateBulletPrefab(DroneBulletPath, layers, false, Bullet.DodgeRule.PhaseDash, DroneBulletColor);
 
-    // Varsayılan değerler sert tavan silahıdır; ilk bölümler gibi kolay yerlerde daha yumuşak değerler verilebilir
+    // Tavan silahı: oyuncu soldan yaklaşırken (ekrana girdiği andan itibaren) tek tek ateş eder, altından geçilince susar.
+    // Atış sayısı sınırsızdır; mesafe belirler. Bir atış = nişan (windUp) + ara (gap): varsayılanlarla ekrana girişten
+    // altına varışa kadarki ~2.2 sn'de 3 atış olur. Yavaş değerler (ilk bölümler) daha az atış demektir
     internal static void Turret(Transform parent, U.Layers layers, string name, float x, Bullet bulletPrefab,
-        float windUp = 0.4f, float aimLock = 0.2f, float bulletSpeed = 20f, float passTolerance = 4f)
+        float windUp = 0.45f, float aimLock = 0.15f, float bulletSpeed = 20f, float passTolerance = -2f,
+        float gap = 0.25f, float range = 18f)
     {
         // Tavan bloğu (y 8-9) ve altına asılı silah; kılıç menzilinin dışında
         U.Block(parent, layers.Ground, name + "_Ceiling", x - 3f, 8f, 6f, 1f);
@@ -41,11 +45,14 @@ public static class SectionDEnemiesTestSceneBuilder
         turret.GetComponent<Collider>().isTrigger = true;
         U.Colorize(turret, TurretColor);
 
+        // Menzil: varsayılan 18 = oyuncunun silahı ekranın sağ kenarında görmeye başladığı mesafe. Büyük = daha çok atış (zor)
         EnemyShooter shooter = SetupEnemy(turret, bulletPrefab, false, new Vector3(0f, -0.6f, 0f),
-            18f, windUp, 1.5f, 1, 0f, bulletSpeed);
+            range, windUp, gap, 1, 0f, bulletSpeed);
         U.SetFloat(shooter, "aimLockTime", aimLock);
-        // Oyuncu altından geçtikten sonra da bu mesafe boyunca ateş eder
+        // Susma noktası: silahın x'i + passTolerance (varsayılan -2 = silahın 2 birim önü, altındaki sessiz alan).
+        // Oyuncu oraya varınca susar; varmadan ateşleyemeyeceği nişana hiç başlamaz (arkadan / yarım atış yok)
         U.SetFloat(shooter, "passTolerance", passTolerance);
+        U.SetBool(shooter, "cancelWhenPassed", true);
     }
 
     // Dronlar havadadır: yerdeki oyuncu altından her zaman geçebilir (en düşük yükseklik zorlanır).

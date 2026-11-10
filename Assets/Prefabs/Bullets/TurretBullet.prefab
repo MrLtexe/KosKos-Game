@@ -155,7 +155,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Bullet
   parryable: 1
-  dodgeRule: 0
+  dodgeRule: 1
   levelLayers:
     serializedVersion: 2
     m_Bits: 1536

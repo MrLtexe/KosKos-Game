@@ -136,18 +136,25 @@ public static class TestWorldBuilder
         U.Ground(a, g, "Ground_C", 95f, 120f);
     }
 
-    // 6. Düşmanlar: kaçış ve savuşturma için tavan silahları, süzülen / devriye / uzun menzil dronlar
+    // 6. Düşmanlar: önce birbirinden ayrı üç tavan silahı (her biri yaklaşırken menzil boyunca tek tek atış; aralar ekrana sığmayacak kadar uzun,
+    // karşılaşmalar karışmaz), sonra (henüz yenilenmemiş) dronlar.
+    // Sıradan atılmayı denemek için Play sırasında Test_AllUnlocked asset'inde Phase tikini kaldır (Play bitince geri tikle)
     private static void BuildEnemies(Transform a, U.Layers l)
     {
-        U.Ground(a, l.Ground, "Ground", -5f, 175f);
+        U.Ground(a, l.Ground, "Ground", -5f, 225f);
         Bullet turretBullet = DE.TurretBullet(l);
         Bullet droneBullet = DE.DroneBullet(l);
-        DE.Turret(a, l, "Turret_Dodge", 30f, turretBullet);
-        DE.Turret(a, l, "Turret_Parry", 60f, turretBullet);
-        DE.Drone(a, l, "Drone_Hover", 95f, 4.5f, droneBullet, 10f);
-        // Devriye: 115 ile 125 arasında gidip gelir
-        DE.Drone(a, l, "Drone_Patrol", 115f, 5f, droneBullet, 10f, 10f);
-        DE.Drone(a, l, "Drone_Phase", 155f, 5f, droneBullet, 12f);
+        // Zorluk: kolay = küçük menzil, erken susar; zor = büyük menzil (daha çok atış), silaha daha yakın kadar ateş eder
+        DE.Turret(a, l, "Turret_Easy", 35f, turretBullet, range: 14f, passTolerance: -3f);
+        DE.Turret(a, l, "Turret_Normal", 70f, turretBullet);
+        DE.Turret(a, l, "Turret_Hard", 110f, turretBullet, range: 24f, passTolerance: -1f);
+
+        // Sadece test: oyuncunun üstünde "şimdi atıl" göstergesi (sarı = mermi geliyor, yeşil = şimdi atılırsan arkanda kalır)
+        new GameObject("DodgeTimingIndicator").AddComponent<DodgeTimingIndicator>().transform.SetParent(a, false);
+        DE.Drone(a, l, "Drone_Hover", 145f, 4.5f, droneBullet, 10f);
+        // Devriye: 165 ile 175 arasında gidip gelir
+        DE.Drone(a, l, "Drone_Patrol", 165f, 5f, droneBullet, 10f, 10f);
+        DE.Drone(a, l, "Drone_Phase", 205f, 5f, droneBullet, 12f);
     }
 
     // 7. Fırlatma alanı: 6.5 yüksek duvar fırlatma + çift zıplama ile aşılır

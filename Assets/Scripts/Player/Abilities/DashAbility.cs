@@ -14,8 +14,8 @@ public class DashAbility : MonoBehaviour
     [Tooltip("Atılmanın süresi (sn). Mesafe = hız x süre.")]
     [SerializeField] private float dashDuration = 0.2f;
 
-    [Tooltip("Yerde iki atılma arasındaki bekleme süresi (sn).")]
-    [SerializeField] private float groundDashCooldown = 0.3f;
+    [Tooltip("İki atılma arasındaki bekleme süresi (sn); yerde ve havada geçerli. Havada ayrıca tek atılma hakkı vardır (yere değince / vuruşla yenilenir).")]
+    [SerializeField] private float dashCooldown = 0.5f;
 
     [Header("Sıyrılganlık")]
     [Tooltip("Sıyrılganlık ile içinden geçilebilen layer'lar (Phaseable). Kalın duvarlar bu layer'da OLMAMALI.")]
@@ -25,8 +25,8 @@ public class DashAbility : MonoBehaviour
     [SerializeField] private float phaseVisualHold = 0.15f;
 
     [Header("Mermiden Kaçış")]
-    [Tooltip("Atılma bittikten sonra mermilerden kaçış korumasının devam ettiği ek süre (sn). Yelpaze mermilerinin hepsini tek atılmayla geçebilmek için.")]
-    [SerializeField] private float dodgeGraceTime = 0.1f;
+    [Tooltip("Atılma bittikten sonra mermilerden kaçış korumasının (sıyrılganlıkla içinden geçme) devam ettiği ek süre (sn). Toplam koruma = atılma süresi + bu süre (0.2 + 0.2 = 0.4).")]
+    [SerializeField] private float dodgeGraceTime = 0.2f;
 
     [Header("Eğilme")]
     [Tooltip("Atılma sırasında karakterin Z ekseninde döndüğü açı (derece).")]
@@ -39,6 +39,10 @@ public class DashAbility : MonoBehaviour
     [SerializeField] private float tiltReturnTime = 0.2f;
 
     public bool IsDashing { get; private set; }
+    public float DashSpeed => dashSpeed;
+    public float DashDuration => dashDuration;
+    // Bekleme süresi doldu mu (havada ayrıca atılma hakkı da gerekir)
+    public bool CooldownReady => Time.time >= lastDashTime + dashCooldown;
     // Sıyrılganlık açık mı? Açıksa atılırken Phaseable layer'ındaki nesnelerin (ince duvarlar) içinden geçer.
     // Bölümün AbilityLoadout'undan PlayerLoadout tarafından ayarlanır
     public bool PhaseUnlocked { get; set; }
@@ -58,7 +62,7 @@ public class DashAbility : MonoBehaviour
     private bool lastDashPhased;
     private float dashEndTime;
     private float dodgeGraceEndTime = float.NegativeInfinity;
-    private float lastGroundDashTime = float.NegativeInfinity;
+    private float lastDashTime = float.NegativeInfinity;
     private float phaseVisualUntil = float.NegativeInfinity;
     // Zipline'dan düşünce yere inene kadar atılma yok
     private bool blockedUntilLanded;
@@ -98,20 +102,15 @@ public class DashAbility : MonoBehaviour
         // Duvar koşusunda atılma yok
         if (IsDashing || death.IsDead || blockedUntilLanded || motor.IsWallRunning) return;
 
+        // Bekleme süresi her atılmaya uygulanır; havada ayrıca atılma hakkı gerekir
+        if (Time.time < lastDashTime + dashCooldown) return;
         bool grounded = motor.IsGrounded;
-        if (grounded)
-        {
-            if (Time.time < lastGroundDashTime + groundDashCooldown) return;
-        }
-        else if (!airDashAvailable)
-        {
-            return;
-        }
+        if (!grounded && !airDashAvailable) return;
 
         if (!motor.TryAcquireControl(this)) return;
 
-        if (grounded) lastGroundDashTime = Time.time;
-        else airDashAvailable = false;
+        lastDashTime = Time.time;
+        if (!grounded) airDashAvailable = false;
 
         IsDashing = true;
         // Fizik zamanına göre ölçülür; FixedUpdate'teki kontrol ile aynı saat kullanılsın diye
@@ -233,7 +232,7 @@ public class DashAbility : MonoBehaviour
     private void OnRespawned()
     {
         airDashAvailable = true;
-        lastGroundDashTime = float.NegativeInfinity;
+        lastDashTime = float.NegativeInfinity;
         dodgeGraceEndTime = float.NegativeInfinity;
         blockedUntilLanded = false;
         ResetTilt();

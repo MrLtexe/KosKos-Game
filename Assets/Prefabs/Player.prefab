@@ -1419,11 +1419,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DashAbility
   dashSpeed: 22
   dashDuration: 0.2
-  groundDashCooldown: 0.3
+  dashCooldown: 0.5
   phaseableLayers:
     serializedVersion: 2
     m_Bits: 1024
-  dodgeGraceTime: 0.1
+  dodgeGraceTime: 0.2
 --- !u!114 &467729156314950423
 MonoBehaviour:
   m_ObjectHideFlags: 0

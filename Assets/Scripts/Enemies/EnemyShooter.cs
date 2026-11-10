@@ -14,9 +14,11 @@ public class EnemyShooter : MonoBehaviour
     [Tooltip("Oyuncu bu mesafeye girince nişan almaya başlar (birim).")]
     [SerializeField] private float range = 18f;
 
-    [Tooltip("Oyuncu düşmanı bu kadar geçtikten sonra ateş kesilir (birim). Arkadan vurulmayı engeller.")]
+    [Tooltip("Oyuncu düşmanı bu kadar geçtikten sonra ateş kesilir (birim). Arkadan vurulmayı engeller. Negatif = düşmana varmadan, önündeki bu mesafede susar (tavan silahının altındaki sessiz alan).")]
     [SerializeField] private float passTolerance = 0.3f;
 
+    [Tooltip("Açıksa oyuncu düşmanı geçtiği anda süren nişan da iptal edilir (tavan silahı: arkadan atış yok). Kapalıysa başlayan nişan her zaman ateşle biter.")]
+    [SerializeField] private bool cancelWhenPassed;
     [Header("Zamanlama")]
     [Tooltip("Nişan alma (uyarı çizgisi) süresi (sn).")]
     [SerializeField] private float windUpTime = 0.6f;
@@ -50,10 +52,13 @@ public class EnemyShooter : MonoBehaviour
     [Tooltip("Nişan uyarı çizgisi.")]
     [SerializeField] private AimTelegraph telegraph;
 
-    private enum State { Idle, WindUp, Cooldown }
+    // Stunned: mermisi savuşturuldu, geri dönen mermi gelene kadar ateş etmez (ölmeden hemen önce atış olmasın)
+    private enum State { Idle, WindUp, Cooldown, Stunned }
 
     private State state = State.Idle;
     private float stateStartTime;
+    // Şu anki nişan ForceShot ile mi başladı (o zaman geçilse bile iptal edilmez)
+    private bool forcedShot;
 
     // Oyuncuyu gördü ve atış döngüsünde (nişan veya soğuma); devriye dronları bu sürede yerinde durur
     public bool IsEngaged => state != State.Idle;
@@ -117,9 +122,11 @@ public class EnemyShooter : MonoBehaviour
         switch (state)
         {
             case State.Idle:
-                if (PlayerInRange())
+                // cancelWhenPassed: oyuncu atıştan önce geçecekse nişana hiç başlanmaz (yarım kalıp kaybolan çizgi olmasın)
+                if (PlayerInRange() && !(cancelWhenPassed && WillPassBeforeFire()))
                 {
                     Enter(State.WindUp);
+                    forcedShot = false;
                     // Çizgi eski bir noktadan kaymaya başlamasın: ilk karede hedefe otur
                     aimPoint = RunPathTarget(windUpTime);
                     aimPointVelocity = Vector3.zero;
@@ -127,8 +134,13 @@ public class EnemyShooter : MonoBehaviour
                 break;
 
             case State.WindUp:
-                // Nişan başladıysa atış her zaman yapılır (oyuncu menzilden çıksa bile): uyarı çizgisi hiç boşa çıkmaz
-                if (elapsed < windUpTime - aimLockTime)
+                // Nişan başladıysa atış yapılır (oyuncu menzilden çıksa bile): uyarı çizgisi boşa çıkmaz.
+                // İstisna: cancelWhenPassed açıksa oyuncu düşmanı geçince nişan iptal (arkadan vurulmaz)
+                if (cancelWhenPassed && !forcedShot && PlayerPassed())
+                {
+                    ResetCycle();
+                }
+                else if (elapsed < windUpTime - aimLockTime)
                 {
                     // Nişan serbest: her karede yeniden hesaplanır
                     float timeUntilFire = windUpTime - elapsed;
@@ -169,22 +181,37 @@ public class EnemyShooter : MonoBehaviour
         return target;
     }
 
+    // Mermisi kılıçla geri gönderildi: nişan iptal, ölene (ya da oyuncu yeniden doğana) kadar ateş yok
+    public void OnBulletReflected()
+    {
+        telegraph.Hide();
+        Enter(State.Stunned);
+    }
+
     // Menzil/geçiş kontrolü olmadan hemen nişan alıp ateş eder (ör. kovalayan devriye dronunun son atışı)
     public void ForceShot()
     {
         if (player == null || body.IsDead || playerDeath.IsDead || state == State.WindUp) return;
         Enter(State.WindUp);
+        forcedShot = true;
         aimPoint = RunPathTarget(windUpTime);
         aimPointVelocity = Vector3.zero;
     }
 
     private bool PlayerInRange()
     {
-        Vector3 p = player.transform.position;
-        Vector3 me = transform.position;
         // Oyuncu düşmanı geçtiyse ateş yok
-        if (p.x > me.x + passTolerance) return false;
-        return (p - me).sqrMagnitude <= range * range;
+        if (PlayerPassed()) return false;
+        return (player.transform.position - transform.position).sqrMagnitude <= range * range;
+    }
+
+    private bool PlayerPassed() => player.transform.position.x > transform.position.x + passTolerance;
+
+    // Oyuncu şu hızla koşarsa nişan süresi dolmadan susma noktasını geçer mi
+    private bool WillPassBeforeFire()
+    {
+        float distanceLeft = transform.position.x + passTolerance - player.transform.position.x;
+        return player.CurrentSpeed * windUpTime >= distanceLeft;
     }
 
     private void Fire()

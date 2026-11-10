@@ -7,14 +7,14 @@ public class Bullet : MonoBehaviour, ISwordHittable
 {
     public enum DodgeRule
     {
-        AnyDash,   // her atılma kaçırır (tavan silahı)
-        PhaseDash  // sadece sıyrılganlıklı atılma kaçırır (dron)
+        AnyDash,   // her atılma kaçırır (şu an kullanan mermi yok)
+        PhaseDash  // sadece sıyrılganlıklı atılma içinden geçer (tavan silahı, dron); sıradan atılma sadece hızıyla kaçırabilir
     }
 
     [Tooltip("Kılıçla geri gönderilebilir mi? Tavan silahı mermisi: evet (sarı). Dron mermisi: hayır (mor).")]
     [SerializeField] private bool parryable = true;
 
-    [Tooltip("Hangi atılma bu mermiden kaçırır. AnyDash: her atılma. PhaseDash: sadece sıyrılganlıklı atılma.")]
+    [Tooltip("Hangi atılma bu mermiden korur. AnyDash: her atılma. PhaseDash: sadece sıyrılganlıklı atılma (sıradan atılma ancak mermiyi geride bırakırsa kurtarır).")]
     [SerializeField] private DodgeRule dodgeRule = DodgeRule.AnyDash;
 
     [Tooltip("Mermiyi yok eden seviye layer'ları (zemin, duvarlar).")]
@@ -25,6 +25,13 @@ public class Bullet : MonoBehaviour, ISwordHittable
 
     [Tooltip("Kılıçla geri gönderilen merminin hızı (birim/sn).")]
     [SerializeField] private float reflectSpeed = 25f;
+
+    // Sahnede uçan tüm mermiler (test sahnesindeki atılma zamanlama göstergesi okur)
+    public static readonly System.Collections.Generic.List<Bullet> Active = new System.Collections.Generic.List<Bullet>();
+
+    public Vector3 Position => rb.position;
+    public Vector3 Velocity => velocity;
+    public bool IsReflected => reflected;
 
     private Rigidbody rb;
     private Vector3 velocity;
@@ -39,6 +46,16 @@ public class Bullet : MonoBehaviour, ISwordHittable
         rb.isKinematic = true;
         rb.useGravity = false;
         rb.interpolation = RigidbodyInterpolation.Interpolate;
+    }
+
+    private void OnEnable()
+    {
+        Active.Add(this);
+    }
+
+    private void OnDisable()
+    {
+        Active.Remove(this);
     }
 
     public void Launch(Vector3 position, Vector3 direction, float speed, EnemyBody shooter, BulletPool ownerPool)
@@ -126,6 +143,8 @@ public class Bullet : MonoBehaviour, ISwordHittable
 
         reflected = true;
         spawnTime = Time.time;
+        // Sahibi, geri dönen mermi kendisine varana kadar ateş etmez
+        if (owner != null && owner.TryGetComponent(out EnemyShooter shooter)) shooter.OnBulletReflected();
         // Kılıç izinin mermiye bakan yerinde küçük kıvılcım
         ParrySparkPlaceholder.Play(source.SlashPointToward(rb.position));
         return true;
