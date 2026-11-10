@@ -24,6 +24,12 @@ public class LevelGoal : MonoBehaviour
 
         triggered = true;
 
+        // Oyuncu hedefe değdiği anda bölüm süresini hemen durdur (diyalog oynasa bile süre artmasın)
+        if (LevelRun.Current != null)
+        {
+            LevelRun.Current.Paused = true;
+        }
+
         bool hasData = dialogueData != null && dialogueData.Lines != null && dialogueData.Lines.Count > 0;
         bool hasLines = dialogueLines != null && dialogueLines.Count > 0;
 

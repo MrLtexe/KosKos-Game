@@ -220,6 +220,12 @@ public class DialogueSystem : MonoBehaviour
             Time.timeScale = 0f;
         }
 
+        // Diyalog sırasında bölüm süresinin (LevelRun.Elapsed) akmasını durdur
+        if (LevelRun.Current != null)
+        {
+            LevelRun.Current.Paused = true;
+        }
+
         // Input haritalarını ayarla
         if (playerMap != null && playerMap.enabled)
         {
@@ -457,6 +463,12 @@ public class DialogueSystem : MonoBehaviour
             if (pauseTimeScale)
             {
                 Time.timeScale = cachedTimeScale;
+            }
+
+            // Diyalog bittiğinde bölüm süresi (LevelRun.Elapsed) tekrar akmaya devam etsin
+            if (LevelRun.Current != null && !LevelRun.Current.IsFinished)
+            {
+                LevelRun.Current.Paused = false;
             }
 
             if (dialogueMap != null && dialogueMap.enabled)
