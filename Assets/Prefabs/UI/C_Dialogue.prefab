@@ -559,11 +559,14 @@ MonoBehaviour:
   dialogueText: {fileID: 291891542076994397}
   defaultAvatar: {fileID: 0}
   defaultName: KosKos
-  containerSlideOffsetY: -35
+  boxSlideOffsetY: -35
   avatarSlideOffsetX: 80
   avatarSlideDirection: -1
   openEase: 27
   closeEase: 8
+  dimAlpha: 0.4
+  dimColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
+  dimScaleMultiplier: 0.92
 --- !u!1 &3809589327526994436
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,11 +675,14 @@ MonoBehaviour:
   dialogueText: {fileID: 3746887850988292189}
   defaultAvatar: {fileID: 0}
   defaultName: NPC
-  containerSlideOffsetY: -35
+  boxSlideOffsetY: -35
   avatarSlideOffsetX: 80
   avatarSlideDirection: 1
   openEase: 27
   closeEase: 8
+  dimAlpha: 0.4
+  dimColor: {r: 0.55, g: 0.55, b: 0.55, a: 1}
+  dimScaleMultiplier: 0.92
 --- !u!1 &7333594532102761156
 GameObject:
   m_ObjectHideFlags: 0
@@ -1177,7 +1183,7 @@ MonoBehaviour:
   switchDuration: 0.25
   punchAvatarOnSameSpeaker: 1
   pauseTimeScale: 1
-  inputActions: {fileID: 0}
+  inputActions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   dialogueMapName: Dialogue
   skipActionName: Skip
   playerMapName: Player

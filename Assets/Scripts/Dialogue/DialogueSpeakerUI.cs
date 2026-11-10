@@ -212,14 +212,24 @@ public class DialogueSpeakerUI : MonoBehaviour
 
         if (containerRect != null)
         {
-            containerRect.anchoredPosition = containerOriginalPos
-                + new Vector2(0f, boxSlideOffsetY);
-            containerRect.localScale = containerOriginalScale * 0.88f;
+            if (!hasAvatarEntered)
+            {
+                // İlk girişte kutu hafifçe alttan kayarak açılır
+                containerRect.anchoredPosition = containerOriginalPos
+                    + new Vector2(0f, boxSlideOffsetY);
+                containerRect.localScale = containerOriginalScale * 0.88f;
 
-            seq.Join(containerRect.DOAnchorPos(containerOriginalPos, duration)
-                .SetEase(openEase).SetUpdate(true));
-            seq.Join(containerRect.DOScale(containerOriginalScale, duration)
-                .SetEase(openEase).SetUpdate(true));
+                seq.Join(containerRect.DOAnchorPos(containerOriginalPos, duration)
+                    .SetEase(openEase).SetUpdate(true));
+                seq.Join(containerRect.DOScale(containerOriginalScale, duration)
+                    .SetEase(openEase).SetUpdate(true));
+            }
+            else
+            {
+                // Karakter zaten sahnedeyse kutu yerindedir, sadece alpha ile açılır (çocuk olan avatarı sarsmaz)
+                containerRect.anchoredPosition = containerOriginalPos;
+                containerRect.localScale = containerOriginalScale;
+            }
         }
 
         seq.OnComplete(() =>
@@ -250,6 +260,8 @@ public class DialogueSpeakerUI : MonoBehaviour
         var seq = DOTween.Sequence().SetUpdate(true);
 
         // ── AVATAR: Soluklaştır ──
+        // Avatar, konteynerin child'ı olduğu için konteyneri oynatmayıp sadece avatarın
+        // alfa, renk ve boyutunu değiştiriyoruz. Böylece sıçrama/zıplama tamamen önlenir.
         if (avatarImage != null && avatarRect != null && hasAvatarEntered)
         {
             if (avatarCanvasGroup != null)
@@ -261,7 +273,8 @@ public class DialogueSpeakerUI : MonoBehaviour
 
         // ── DİYALOG KUTUSU: Kapat ──
         // containerCanvasGroup alpha -> 0 yapar. Avatar ignoreParentGroups
-        // sayesinde bundan etkilenmez.
+        // sayesinde görünür kalır. Konteynerin pozisyonunu ve ölçeğini oynamıyoruz;
+        // böylece child olan avatar yerinde sabit kalır ve animasyon sonunda sıçrama yaşanmaz.
         if (containerCanvasGroup != null)
         {
             containerCanvasGroup.interactable = false;
@@ -269,25 +282,9 @@ public class DialogueSpeakerUI : MonoBehaviour
             seq.Join(containerCanvasGroup.DOFade(0f, duration).SetUpdate(true));
         }
 
-        if (containerRect != null)
-        {
-            var targetPos = containerOriginalPos + new Vector2(0f, boxSlideOffsetY * 0.5f);
-            seq.Join(containerRect.DOAnchorPos(targetPos, duration)
-                .SetEase(closeEase).SetUpdate(true));
-            seq.Join(containerRect.DOScale(containerOriginalScale * 0.88f, duration)
-                .SetEase(closeEase).SetUpdate(true));
-        }
-
         seq.OnComplete(() =>
         {
             ClearText();
-            // Konteyner pozisyonlarını sıfırla ama SetActive(false) YAPMA
-            // Avatar hâlâ soluk olarak görünmeli
-            if (containerRect != null)
-            {
-                containerRect.anchoredPosition = containerOriginalPos;
-                containerRect.localScale = containerOriginalScale;
-            }
         });
 
         return seq;
