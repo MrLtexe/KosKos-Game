@@ -18,14 +18,13 @@ public static class PrototypeLevelsBuilder
     internal const string MenuScenePath = "Assets/Scenes/MainMenu.unity";
 
     // Bölüm sonu diyaloğu (Yunus'un diyalog sistemi): her bölüme C_Dialogue prefab'ı konur, hedefe diyalog verisi atanır
-    private const string DialoguePrefabPath = "Assets/Prefabs/UI/C_Dialogue.prefab";
-    private const string EndDialogueDataPath = "Assets/Scripts/Dialogue/Data/DialogueData0.asset";
+    private const string EndDialogueDataPath = LevelPieces.DefaultDialogueDataPath;
 
-    private static readonly Color KumasColor = new Color(0.6f, 0.25f, 0.9f);
-    private static readonly Color BelgeColor = Color.white;
-    private static readonly Color ThinWallColor = new Color(0.2f, 0.9f, 1f);
-    private static readonly Color GoalColor = new Color(0.2f, 0.85f, 0.3f);
-    private static readonly Color FlagColor = new Color(1f, 0.9f, 0.2f);
+    // Bölüm kiti de (ince duvar parçası) aynı rengi kullanır
+    internal static readonly Color ThinWallColor = new Color(0.2f, 0.9f, 1f);
+
+    // Builder'ın kendi bölümleri; katalogda bunların dışındaki girişler (bölüm editörüyle yapılanlar) korunur
+    private static readonly string[] PrototypeIds = { "L1", "L2", "L3" };
 
     // Bölüm tanımları: kimlik, ad, sahne, madalya süreleri, loadout (çift zıplama, sıyrılganlık, savuşturma, kanca, jet, bot)
     private struct LevelDef
@@ -129,23 +128,14 @@ public static class PrototypeLevelsBuilder
     {
         if (string.IsNullOrEmpty(def.endDialogue)) return;
 
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(DialoguePrefabPath);
         var data = AssetDatabase.LoadAssetAtPath<DialogueData>(def.endDialogue);
-        if (prefab == null || data == null)
+        if (data == null)
         {
-            Debug.LogWarning($"[KosKos] {def.sceneName}: diyalog prefab'ı ya da verisi bulunamadı ({DialoguePrefabPath}, {def.endDialogue}); bölüm diyalogsuz kuruldu.");
+            Debug.LogWarning($"[KosKos] {def.sceneName}: diyalog verisi bulunamadı ({def.endDialogue}); bölüm diyalogsuz kuruldu.");
             return;
         }
-
-        var dialogue = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-        // T tuşuyla diyalog başlatan test tetikleyicisi (bölüm içinde istenmiyorsa kaldırılır)
-        if (!def.keepDialogueTestTrigger)
-        {
-            foreach (DialogueTestTrigger trigger in dialogue.GetComponentsInChildren<DialogueTestTrigger>(true))
-            {
-                Object.DestroyImmediate(trigger);
-            }
-        }
+        // T tuşuyla diyalog başlatan test tetikleyicisi bölüm içinde istenmiyorsa kaldırılır
+        if (LevelPieces.AddDialogueObject(scene, def.keepDialogueTestTrigger) == null) return;
 
         LevelGoal goal = Object.FindFirstObjectByType<LevelGoal>();
         var so = new SerializedObject(goal);
@@ -291,68 +281,20 @@ public static class PrototypeLevelsBuilder
         U.KillZone(p, 150f, 420f);
     }
 
-    // Mor, dönen para (silindir kameraya bakar)
+    // Parça yapıcıları LevelPieces'ta (bölüm editörüyle ortak); kimlik biçimi kayıt dosyasıyla aynı kalır
     private static void Kumas(Transform parent, string levelId, int number, Vector3 position)
     {
-        GameObject coin = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-        coin.name = $"Kumas_{number}";
-        coin.transform.SetParent(parent);
-        coin.transform.position = position;
-        coin.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-        coin.transform.localScale = new Vector3(0.6f, 0.08f, 0.6f);
-        coin.GetComponent<Collider>().isTrigger = true;
-        SetupCollectible(coin, Collectible.Kind.Kumas, $"{levelId}{GameProgress.KumasTag}{number}", KumasColor, 120f);
+        LevelPieces.Kumas(parent, $"{levelId}{GameProgress.KumasTag}{number}", position, $"Kumas_{number}");
     }
 
-    // Beyaz, havada duran sayfa
     private static void Belge(Transform parent, string levelId, Vector3 position)
     {
-        GameObject page = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        page.name = "Belge";
-        page.transform.SetParent(parent);
-        page.transform.position = position;
-        page.transform.localScale = new Vector3(0.6f, 0.8f, 0.05f);
-        page.GetComponent<Collider>().isTrigger = true;
-        SetupCollectible(page, Collectible.Kind.Belge, $"{levelId}{GameProgress.BelgeTag}1", BelgeColor, 0f);
+        LevelPieces.Belge(parent, $"{levelId}{GameProgress.BelgeTag}1", position);
     }
 
-    private static void SetupCollectible(GameObject go, Collectible.Kind kind, string id, Color color, float spin)
-    {
-        var collectible = go.AddComponent<Collectible>();
-        var so = new SerializedObject(collectible);
-        so.FindProperty("kind").enumValueIndex = (int)kind;
-        so.FindProperty("id").stringValue = id;
-        so.FindProperty("color").colorValue = color;
-        so.FindProperty("spinSpeed").floatValue = spin;
-        so.ApplyModifiedPropertiesWithoutUndo();
-    }
-
-    // Bölüm sonu: yüksek görünmez tetik + yeşil direk ve sarı bayrak
     private static void GoalAt(Transform parent, float x)
     {
-        var goal = new GameObject("LevelGoal");
-        goal.transform.SetParent(parent);
-        goal.transform.position = new Vector3(x, 10f, 0f);
-        var trigger = goal.AddComponent<BoxCollider>();
-        trigger.isTrigger = true;
-        trigger.size = new Vector3(2f, 20f, U.LevelDepth);
-        goal.AddComponent<LevelGoal>();
-
-        GameObject pole = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        pole.name = "Pole";
-        Object.DestroyImmediate(pole.GetComponent<Collider>());
-        pole.transform.SetParent(goal.transform);
-        pole.transform.position = new Vector3(x, 3f, 0f);
-        pole.transform.localScale = new Vector3(0.3f, 6f, 0.3f);
-        U.Colorize(pole, GoalColor);
-
-        GameObject flag = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        flag.name = "Flag";
-        Object.DestroyImmediate(flag.GetComponent<Collider>());
-        flag.transform.SetParent(goal.transform);
-        flag.transform.position = new Vector3(x + 0.8f, 5.4f, 0f);
-        flag.transform.localScale = new Vector3(1.4f, 0.9f, 0.1f);
-        U.Colorize(flag, FlagColor);
+        LevelPieces.Goal(parent, x);
     }
 
     // Katalog asset'i varsa onu kullanır (GUID korunur, sahnelerdeki referanslar kopmaz)
@@ -367,26 +309,54 @@ public static class PrototypeLevelsBuilder
         return catalog;
     }
 
+    // Önce prototip bölümler (L1-L3) yazılır, ardından katalogda zaten olan diğer bölümler (bölüm editörüyle yapılanlar) aynı sırayla korunur
     private static void WriteCatalog(LevelCatalog catalog, LevelDef[] levels)
     {
+        var kept = new List<LevelCatalog.Entry>();
+        foreach (LevelCatalog.Entry entry in catalog.Entries)
+        {
+            if (System.Array.IndexOf(PrototypeIds, entry.id) >= 0) continue;
+            // Değerler kopyalanır: aşağıda dizi yeniden yazılınca asıl nesneler değişebilir
+            kept.Add(new LevelCatalog.Entry
+            {
+                id = entry.id, displayName = entry.displayName, sceneName = entry.sceneName,
+                belgeTitle = entry.belgeTitle, belgeText = entry.belgeText,
+                displayNameTr = entry.displayNameTr, belgeTitleTr = entry.belgeTitleTr, belgeTextTr = entry.belgeTextTr
+            });
+        }
+
         var so = new SerializedObject(catalog);
         SerializedProperty entries = so.FindProperty("entries");
-        entries.arraySize = levels.Length;
+        entries.arraySize = levels.Length + kept.Count;
         for (int i = 0; i < levels.Length; i++)
         {
-            SerializedProperty e = entries.GetArrayElementAtIndex(i);
-            e.FindPropertyRelative("id").stringValue = levels[i].id;
-            e.FindPropertyRelative("displayName").stringValue = levels[i].displayName;
-            e.FindPropertyRelative("sceneName").stringValue = levels[i].sceneName;
-            e.FindPropertyRelative("belgeTitle").stringValue = levels[i].belgeTitle;
-            e.FindPropertyRelative("belgeText").stringValue = levels[i].belgeText;
-            e.FindPropertyRelative("displayNameTr").stringValue = levels[i].displayNameTr;
-            e.FindPropertyRelative("belgeTitleTr").stringValue = levels[i].belgeTitleTr;
-            e.FindPropertyRelative("belgeTextTr").stringValue = levels[i].belgeTextTr;
+            LevelDef d = levels[i];
+            WriteEntry(entries.GetArrayElementAtIndex(i), d.id, d.displayName, d.sceneName, d.belgeTitle, d.belgeText,
+                d.displayNameTr, d.belgeTitleTr, d.belgeTextTr);
+        }
+        for (int i = 0; i < kept.Count; i++)
+        {
+            LevelCatalog.Entry k = kept[i];
+            WriteEntry(entries.GetArrayElementAtIndex(levels.Length + i), k.id, k.displayName, k.sceneName, k.belgeTitle,
+                k.belgeText, k.displayNameTr, k.belgeTitleTr, k.belgeTextTr);
         }
         so.ApplyModifiedPropertiesWithoutUndo();
         EditorUtility.SetDirty(catalog);
         AssetDatabase.SaveAssets();
+    }
+
+    // Katalog girişinin alanlarını yazar (bölüm editörü de kullanır)
+    internal static void WriteEntry(SerializedProperty e, string id, string displayName, string sceneName, string belgeTitle,
+        string belgeText, string displayNameTr, string belgeTitleTr, string belgeTextTr)
+    {
+        e.FindPropertyRelative("id").stringValue = id;
+        e.FindPropertyRelative("displayName").stringValue = displayName;
+        e.FindPropertyRelative("sceneName").stringValue = sceneName;
+        e.FindPropertyRelative("belgeTitle").stringValue = belgeTitle;
+        e.FindPropertyRelative("belgeText").stringValue = belgeText;
+        e.FindPropertyRelative("displayNameTr").stringValue = displayNameTr;
+        e.FindPropertyRelative("belgeTitleTr").stringValue = belgeTitleTr;
+        e.FindPropertyRelative("belgeTextTr").stringValue = belgeTextTr;
     }
 
     // Bölüm loadout'u: builder her seferinde tablodaki değerleri yazar

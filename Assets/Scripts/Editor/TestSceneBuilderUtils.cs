@@ -49,15 +49,9 @@ public static class TestSceneBuilderUtils
             return false;
         }
 
-        layers = new Layers
-        {
-            Player = EnsureLayer("Player"),
-            Ground = EnsureLayer("Ground"),
-            Phaseable = EnsureLayer("Phaseable"),
-            Enemy = EnsureLayer("Enemy")
-        };
+        layers = EnsureLayers();
 
-        scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+        scene =EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         // Yeni sahne açılınca Unity kullanılmayan asset'leri bellekten atar; bu yüzden asset'ler sahne açıldıktan sonra yüklenir
         actions = AssetDatabase.LoadAssetAtPath<InputActionAsset>(InputAssetPath);
 
@@ -65,6 +59,18 @@ public static class TestSceneBuilderUtils
         var settings = new GameObject("LevelSettings").AddComponent<LevelSettings>();
         SetField(settings, "loadout", GetOrCreateTestLoadout());
         return true;
+    }
+
+    // Oyunun kullandığı layer'lar (yoksa ilk boş slota eklenir); sahne açmadan da çağrılabilir (bölüm kiti, bölüm editörü)
+    public static Layers EnsureLayers()
+    {
+        return new Layers
+        {
+            Player = EnsureLayer("Player"),
+            Ground = EnsureLayer("Ground"),
+            Phaseable = EnsureLayer("Phaseable"),
+            Enemy = EnsureLayer("Enemy")
+        };
     }
 
     // Test loadout'u varsa onu kullanır (tikleri korunur), yoksa her şey açık olarak oluşturur
