@@ -3,11 +3,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-// Tek tıkla ana menü sahnesini üretir: KosKos > Build Main Menu.
+// Tek tıkla ana menü sahnesini üretir: KosKos > Scenes > Build Main Menu.
 // Sahneye MainMenuUI prefab'ı konur (prefab yoksa önce üretilir); menünün düzeni prefab'da düzenlenir, sahne yeniden üretilse de korunur.
 public static class MainMenuBuilder
 {
-    [MenuItem("KosKos/Build Main Menu")]
+    [MenuItem("KosKos/Scenes/Build Main Menu")]
     private static void Build()
     {
         if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;

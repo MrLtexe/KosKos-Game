@@ -2,7 +2,7 @@ using UnityEngine;
 using U = TestSceneBuilderUtils;
 
 // Aletlerin (kanca, jet-çanta, manyetik bot; Section C) ortak sahne parçaları: test dünyası ve prototip bölümler kullanır.
-// (Eski ayrı "Section C Gadgets Test Scene" sahnesi kaldırıldı; testler KosKos > Build Test World ile yapılır.)
+// (Eski ayrı "Section C Gadgets Test Scene" sahnesi kaldırıldı; testler KosKos > Scenes > Build Test World ile yapılır.)
 public static class SectionCGadgetsTestSceneBuilder
 {
     internal static readonly Color SteelColor = new Color(0.55f, 0.65f, 0.8f);

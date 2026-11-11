@@ -8,7 +8,7 @@ using C = SectionCGadgetsTestSceneBuilder;
 using DE = SectionDEnemiesTestSceneBuilder;
 using DT = SectionDTraversalTestSceneBuilder;
 
-// Tek tıkla tüm sistemleri tek sahnede toplayan test dünyasını üretir: KosKos > Build Test World.
+// Tek tıkla tüm sistemleri tek sahnede toplayan test dünyasını üretir: KosKos > Scenes > Build Test World.
 // Oyuncu bir bekleme alanında (hub) hareketsiz başlar. Her sistemin ayrı bir alanı vardır; alanlar üst üste,
 // birbirinden uzakta durur (biri diğerinden görünmez). Her alanın başında bir güvenli alan, altında kendi ölüm alanı vardır:
 // 1-9 ve 0 tuşları o alana ışınlar, R bulunulan alanı baştan alır, H hub'a döner (TestSectionTeleporter).
@@ -25,7 +25,7 @@ public static class TestWorldBuilder
 
     private delegate void AreaBuilder(Transform area, U.Layers layers);
 
-    [MenuItem("KosKos/Build Test World")]
+    [MenuItem("KosKos/Scenes/Build Test World")]
     private static void Build()
     {
         if (!U.BeginScene(out Scene scene, out InputActionAsset actions, out U.Layers layers)) return;

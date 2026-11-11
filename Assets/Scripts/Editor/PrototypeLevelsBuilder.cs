@@ -9,7 +9,7 @@ using C = SectionCGadgetsTestSceneBuilder;
 using DE = SectionDEnemiesTestSceneBuilder;
 using DT = SectionDTraversalTestSceneBuilder;
 
-// Tek tıkla 3 prototip bölümü üretir: KosKos > Build Prototype Levels.
+// Tek tıkla 3 prototip bölümü üretir: KosKos > Scenes > Build Prototype Levels.
 // Bölüm sahneleri, her bölümün loadout'u ve bölüm kataloğu her seferinde yeniden yazılır; elle düzenlemeyin.
 // Gerçek bölüm tasarımları gelince bu builder emekliye ayrılacak.
 public static class PrototypeLevelsBuilder
@@ -64,7 +64,7 @@ public static class PrototypeLevelsBuilder
         }
     };
 
-    [MenuItem("KosKos/Build Prototype Levels")]
+    [MenuItem("KosKos/Scenes/Build Prototype Levels")]
     private static void BuildAll()
     {
         LevelDef[] levels = Levels;

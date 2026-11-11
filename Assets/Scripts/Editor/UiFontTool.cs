@@ -2,7 +2,7 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 
-// Yazı tipini tüm arayüze tek seferde uygular: KosKos > Apply UI Font.
+// Yazı tipini tüm arayüze tek seferde uygular: KosKos > UI > Apply UI Font.
 // Seçilen TextMeshPro yazı tipi; SettingsPanel, MainMenuUI ve LevelUI prefab'larındaki tüm yazılara verilir.
 // Kodla kurulan hile paneli ana menü başlığının yazı tipini kullandığı için o da uyar.
 // Yeni yazı tipi: .ttf dosyasına sağ tık > Create > TextMeshPro > Font Asset; Türkçe harfler için "Atlas Population Mode = Dynamic" olmalı.
@@ -18,7 +18,7 @@ public class UiFontTool : EditorWindow
 
     private TMP_FontAsset font;
 
-    [MenuItem("KosKos/Apply UI Font")]
+    [MenuItem("KosKos/UI/Apply UI Font")]
     private static void Open()
     {
         GetWindow<UiFontTool>(true, "Apply UI Font").minSize = new Vector2(360f, 120f);

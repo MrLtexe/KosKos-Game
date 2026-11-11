@@ -4,7 +4,7 @@ using U = TestSceneBuilderUtils;
 
 // Geçiş mekaniklerinin (fırlatma alanı, zipline, sapan, yolculuk baloncuğu; Section D) ortak sahne parçaları:
 // test dünyası ve prototip bölümler kullanır.
-// (Eski ayrı "Section D Traversal Test Scene" sahnesi kaldırıldı; testler KosKos > Build Test World ile yapılır.)
+// (Eski ayrı "Section D Traversal Test Scene" sahnesi kaldırıldı; testler KosKos > Scenes > Build Test World ile yapılır.)
 public static class SectionDTraversalTestSceneBuilder
 {
     private static readonly Color PadColor = new Color(0.2f, 0.85f, 0.3f);

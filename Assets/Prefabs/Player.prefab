@@ -470,6 +470,120 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlaceholderColor
   color: {r: 0.15, g: 0.15, b: 0.15, a: 1}
+--- !u!1 &3379323010804760856
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3263691756404871128}
+  - component: {fileID: 6063531918900932410}
+  - component: {fileID: 312946000615410983}
+  m_Layer: 8
+  m_Name: Visual
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3263691756404871128
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3379323010804760856}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: -1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 110375743873544129}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!212 &6063531918900932410
+SpriteRenderer:
+  serializedVersion: 2
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3379323010804760856}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_MaskInteraction: 0
+  m_Sprite: {fileID: 21300000, guid: 055fd5a6faa1a744eae2c7939a53ad09, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 4.096, y: 2.73}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 1
+  m_SpriteSortPoint: 0
+--- !u!95 &312946000615410983
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3379323010804760856}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 953674ed21a675d43934442104862152, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &4579269664522394192
 GameObject:
   m_ObjectHideFlags: 0
@@ -1204,6 +1318,7 @@ GameObject:
   - component: {fileID: 2718281828459045235}
   - component: {fileID: 1618033988749894848}
   - component: {fileID: 3605551275463989293}
+  - component: {fileID: 4598420094222481772}
   m_Layer: 8
   m_Name: Player
   m_TagString: Untagged
@@ -1230,6 +1345,7 @@ Transform:
   - {fileID: 3644257613732965255}
   - {fileID: 94039388014154523}
   - {fileID: 3104705451796068378}
+  - {fileID: 3263691756404871128}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6916696997398360299
@@ -1270,7 +1386,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8550790304787940975}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -1375,6 +1491,9 @@ MonoBehaviour:
   groundCheckDistance: 0.1
   frontalHitThreshold: 0.7
   stepTolerance: 0.15
+  wallRunTilt: -10
+  wallClimbSpeed: 5
+  surfaceRotationTime: 0.15
 --- !u!114 &6288376938843774992
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1423,7 +1542,11 @@ MonoBehaviour:
   phaseableLayers:
     serializedVersion: 2
     m_Bits: 1024
+  phaseVisualHold: 0.15
   dodgeGraceTime: 0.2
+  dashTiltAngle: -17
+  dashTiltTime: 0.05
+  tiltReturnTime: 0.2
 --- !u!114 &467729156314950423
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1443,7 +1566,7 @@ MonoBehaviour:
   hitboxSize: {x: 2, y: 3, z: 1}
   hitLayers:
     serializedVersion: 2
-    m_Bits: 4294967039
+    m_Bits: 3639
   hitboxVisual: {fileID: 2763350813586597441}
   slashRadius: 1.7
   slashThickness: 0.5
@@ -1489,6 +1612,8 @@ MonoBehaviour:
   noiseInterval: 0.4
   pushStrength: 6
   damping: 1.5
+  balanceTiltAngle: 25
+  balanceTiltSmoothTime: 0.08
 --- !u!114 &4166878735695676768
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1521,10 +1646,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HookAbility
   range: 7
   pullHeightTolerance: 1
+  hookFlySpeed: 60
   minRopeLength: 2
   maxRopeLength: 7
   releaseBoost: 1.15
+  maxSwingAngle: 90
+  swingEntryBonus: 3
+  pullSpeed: 35
+  pullOvershoot: 3
+  pullExitSpeed: 8
   pullArriveDistance: 0.5
+  pullTiltAngle: -20
+  pullTiltSmoothTime: 0.06
+  swingTiltBlendTime: 0.12
+  releaseTiltReturnTime: 0.15
 --- !u!114 &5622051878394532230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1540,7 +1675,6 @@ MonoBehaviour:
   fuelCapacity: 2
   thrustAcceleration: 60
   maxRiseSpeed: 8
-  refillGroundTime: 2
 --- !u!114 &6576558023598182017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1559,88 +1693,16 @@ MonoBehaviour:
   - {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   - {r: 1, g: 0.5, b: 0, a: 1}
   - {r: 1, g: 0, b: 0, a: 1}
---- !u!114 &3605551275463989293
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8550790304787940975}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 264e9b12a1fccc1498e5d780c189b101, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::MagBootsFxPlaceholder
-  pressRingCount: 20
-  pressRingSpeed: 4
-  pressColor: {r: 0.3, g: 0.7, b: 1, a: 1}
-  pullSparkRate: 70
-  sparkColorA: {r: 0.35, g: 0.75, b: 1, a: 1}
-  sparkColorB: {r: 0.85, g: 0.95, b: 1, a: 1}
---- !u!114 &1618033988749894848
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8550790304787940975}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ee453e7d502ebd949a32426252ada716, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::JumpDustPlaceholder
-  dustCount: 10
-  dustColorA: {r: 0.78, g: 0.75, b: 0.7, a: 1}
-  dustColorB: {r: 0.55, g: 0.52, b: 0.5, a: 1}
-  dustSpeed: {x: 2, y: 4}
-  dustSize: 0.3
-  ringCount: 16
-  ringColor: {r: 0.85, g: 0.95, b: 1, a: 1}
-  ringSpeed: 4
---- !u!114 &2718281828459045235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8550790304787940975}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b07a8641014483043a0b8a8cb5327ab8, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::DeathExplosionPlaceholder
-  colorA: {r: 0, g: 0.55, b: 0.65, a: 1}
-  colorB: {r: 0.4, g: 0.22, b: 0.65, a: 1}
-  cubeCount: 24
-  cubeSpeed: {x: 4, y: 10}
-  cubeSize: {x: 0.12, y: 0.3}
-  cubeLifetime: {x: 0.5, y: 0.9}
-  cubeDrag: 4
-  streakCount: 16
-  streakSpeed: {x: 12, y: 22}
-  streakLifetime: {x: 0.12, y: 0.25}
-  ringCount: 48
-  ringSpeed: 10
-  ringLifetime: 0.25
---- !u!114 &3141592653589793238
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8550790304787940975}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5f0cec7766b074e45bd24e593c0fdbec, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::DashTrailPlaceholder
-  streakColorA: {r: 0, g: 1, b: 1, a: 1}
-  streakColorB: {r: 0.8, g: 0.6, b: 1, a: 1}
-  burstCount: 10
-  emitRate: 120
-  lifetime: 0.25
-  streakLength: 0.8
-  streakThickness: 0.06
+  pullRates:
+  - 15
+  - 35
+  - 60
+  - 90
+  pullRadius: 1.6
+  pullSpeed: 5
+  releaseRingCounts: 100000001c0000002c000000
+  releaseRingSpeed: 8
+  sparkSize: 0.1
 --- !u!114 &6593671263816225314
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1713,6 +1775,13 @@ MonoBehaviour:
   rope: {fileID: 1758735257943850974}
   ropeWidth: 0.05
   ropeColor: {r: 0.6, g: 0.6, b: 0.6, a: 1}
+  showSwingAngle: 1
+  angleWarningMargin: 15
+  angleBackgroundColor: {r: 0.08, g: 0.08, b: 0.1, a: 1}
+  angleBackgroundSize: {x: 1.5, y: 0.4}
+  attachSparkCount: 14
+  attachSparkColorA: {r: 1, g: 0.85, b: 0.4, a: 1}
+  attachSparkColorB: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &7747137792940635670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1728,3 +1797,111 @@ MonoBehaviour:
   barRoot: {fileID: 1189169885486396354}
   fill: {fileID: 7134801009416507369}
   barWidth: 1.2
+  nozzleOffset: {x: -0.4, y: -0.2, z: 0}
+  steamRate: 45
+  steamColorA: {r: 0.95, g: 0.95, b: 0.95, a: 1}
+  steamColorB: {r: 0.65, g: 0.65, b: 0.68, a: 1}
+  steamSpeed: {x: 3, y: 6}
+  steamSize: 0.7
+  startPuffCount: 14
+  stopPuffCount: 6
+  sparkRate: 18
+  sparkColorA: {r: 1, g: 0.6, b: 0.15, a: 1}
+  sparkColorB: {r: 1, g: 0.85, b: 0.35, a: 1}
+--- !u!114 &3141592653589793238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f0cec7766b074e45bd24e593c0fdbec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DashTrailPlaceholder
+  streakColorA: {r: 0, g: 1, b: 1, a: 1}
+  streakColorB: {r: 0.8, g: 0.6, b: 1, a: 1}
+  burstCount: 10
+  emitRate: 120
+  lifetime: 0.25
+  streakLength: 0.8
+  streakThickness: 0.06
+  phaseOpacity: 0.35
+--- !u!114 &2718281828459045235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b07a8641014483043a0b8a8cb5327ab8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeathExplosionPlaceholder
+  colorA: {r: 0, g: 0.55, b: 0.65, a: 1}
+  colorB: {r: 0.4, g: 0.22, b: 0.65, a: 1}
+  cubeCount: 24
+  cubeSpeed: {x: 4, y: 10}
+  cubeSize: {x: 0.12, y: 0.3}
+  cubeLifetime: {x: 0.5, y: 0.9}
+  cubeDrag: 4
+  streakCount: 16
+  streakSpeed: {x: 12, y: 22}
+  streakLifetime: {x: 0.12, y: 0.25}
+  ringCount: 48
+  ringSpeed: 10
+  ringLifetime: 0.25
+--- !u!114 &1618033988749894848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee453e7d502ebd949a32426252ada716, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::JumpDustPlaceholder
+  dustCount: 10
+  dustColorA: {r: 0.78, g: 0.75, b: 0.7, a: 1}
+  dustColorB: {r: 0.55, g: 0.52, b: 0.5, a: 1}
+  dustSpeed: {x: 2, y: 4}
+  dustSize: 0.3
+  ringCount: 16
+  ringColor: {r: 0.85, g: 0.95, b: 1, a: 1}
+  ringSpeed: 4
+--- !u!114 &3605551275463989293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 264e9b12a1fccc1498e5d780c189b101, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MagBootsFxPlaceholder
+  pressRingCount: 20
+  pressRingSpeed: 4
+  pressColor: {r: 0.3, g: 0.7, b: 1, a: 1}
+  pullSparkRate: 70
+  sparkColorA: {r: 0.35, g: 0.75, b: 1, a: 1}
+  sparkColorB: {r: 0.85, g: 0.95, b: 1, a: 1}
+--- !u!114 &4598420094222481772
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8550790304787940975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48881ec46036cdf4bbb765cf0ee7948a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MagBootsAbility
+  ceilingRange: 8
+  pressBufferTime: 0.25

@@ -4,7 +4,7 @@ using U = TestSceneBuilderUtils;
 
 // Düşmanların (tavan silahı, dron; Section D) ortak sahne parçaları: test dünyası ve prototip bölümler kullanır.
 // Mermi prefab'ları sadece yoksa oluşturulur.
-// (Eski ayrı "Section D Enemies Test Scene" sahnesi kaldırıldı; testler KosKos > Build Test World ile yapılır.)
+// (Eski ayrı "Section D Enemies Test Scene" sahnesi kaldırıldı; testler KosKos > Scenes > Build Test World ile yapılır.)
 public static class SectionDEnemiesTestSceneBuilder
 {
     private const string BulletFolder = "Assets/Prefabs/Bullets";

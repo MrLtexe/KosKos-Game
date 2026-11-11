@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-// Arayüz prefab'larının İLK sürümünü üretir: KosKos > Build UI Prefabs.
+// Arayüz prefab'larının İLK sürümünü üretir: KosKos > UI > Build UI Prefabs.
 // SettingsPanel, MainMenuUI ve LevelUI (ikisi de SettingsPanel'i içerir). Var olan prefab'ların üzerine YAZMAZ
 // (menüden çalıştırınca sorar; sahne builder'ları hiç sormadan sadece eksikleri üretir). Üretildikten sonra prefab'lar ekibindir:
 // düzen, renk, yazı tipi Unity'de düzenlenir. Prefab'lar geçici bir önizleme sahnesinde kurulur ve kaydedilir
@@ -30,7 +30,7 @@ public static class UiPrefabBuilder
     // Prefab'lar bu geçici sahnede kurulur
     private static Scene previewScene;
 
-    [MenuItem("KosKos/Build UI Prefabs")]
+    [MenuItem("KosKos/UI/Build UI Prefabs")]
     private static void BuildFromMenu()
     {
         Build(true);

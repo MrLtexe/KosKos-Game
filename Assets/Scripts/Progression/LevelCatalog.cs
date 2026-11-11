@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 // Oyundaki bölümlerin sıralı listesi. Menü bölüm listesini buradan okur; sıra = açılma sırası (A.1).
-// Assets > Create > KosKos > Level Catalog. Prototipte "KosKos > Build Prototype Levels" bu asset'i doldurur.
+// Assets > Create > KosKos > Level Catalog. Prototipte "KosKos > Scenes > Build Prototype Levels" bu asset'i doldurur.
 [CreateAssetMenu(fileName = "LevelCatalog", menuName = "KosKos/Level Catalog")]
 public class LevelCatalog : ScriptableObject
 {

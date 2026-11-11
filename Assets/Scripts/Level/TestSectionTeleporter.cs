@@ -10,7 +10,7 @@ using UnityEngine.UI;
 // fareyle üstüne gelince sararır, tıklayınca o alanın başına ışınlar. 1-9 ve 0 (10.) tuşları da aynı işi yapar,
 // R bulunulan alanı baştan alır, H hub'a döner. Alanlar sahnedeki güvenli alanlardır (aşağıdan yukarı, sonra soldan sağa sıralı).
 // Ölünce de seçilen alanın başında doğulur. Sağ üstte alan tuşları ve oyun tuşları (güncel atamalarıyla) gösterilir.
-// Sadece test dünyasına konur (KosKos > Build Test World ekler); prototip bölümlerde yoktur.
+// Sadece test dünyasına konur (KosKos > Scenes > Build Test World ekler); prototip bölümlerde yoktur.
 public class TestSectionTeleporter : MonoBehaviour
 {
     // Bekleme alanının güvenli alan adı: alan listesine konmaz (test dünyası builder'ı da bu adı kullanır)
