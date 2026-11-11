@@ -17,6 +17,10 @@ public static class PrototypeLevelsBuilder
     internal const string CatalogPath = "Assets/Levels/LevelCatalog.asset";
     internal const string MenuScenePath = "Assets/Scenes/MainMenu.unity";
 
+    // Bölüm sonu diyaloğu (Yunus'un diyalog sistemi): her bölüme C_Dialogue prefab'ı konur, hedefe diyalog verisi atanır
+    private const string DialoguePrefabPath = "Assets/Prefabs/UI/C_Dialogue.prefab";
+    private const string EndDialogueDataPath = "Assets/Scripts/Dialogue/Data/DialogueData0.asset";
+
     private static readonly Color KumasColor = new Color(0.6f, 0.25f, 0.9f);
     private static readonly Color BelgeColor = Color.white;
     private static readonly Color ThinWallColor = new Color(0.2f, 0.9f, 1f);
@@ -31,6 +35,9 @@ public static class PrototypeLevelsBuilder
         public string displayNameTr, belgeTitleTr, belgeTextTr;
         public float silver, gold;
         public bool doubleJump, phase, parry, hook, jetBag, magBoots;
+        // Bölüm sonu diyalog verisi (boş = diyalog yok) ve diyalogdaki T tuşlu test tetikleyicisinin kalıp kalmayacağı
+        public string endDialogue;
+        public bool keepDialogueTestTrigger;
         public System.Action<Transform, U.Layers, string> build;
     }
 
@@ -42,6 +49,7 @@ public static class PrototypeLevelsBuilder
             belgeTitle = "Document 1: The Dome", belgeText = "PLACEHOLDER: The company has claimed the last forests outside the dome cities.",
             displayNameTr = "Kaçış", belgeTitleTr = "Belge 1: Kubbe",
             belgeTextTr = "GEÇİCİ METİN: Şirket, kubbe şehirlerin dışındaki son ormanları kendi zimmetine geçirdi.",
+            endDialogue = EndDialogueDataPath,
             build = BuildLevel1
         },
         new LevelDef
@@ -51,6 +59,7 @@ public static class PrototypeLevelsBuilder
             displayNameTr = "Şehir Üstü", belgeTitleTr = "Belge 2: Virüs",
             belgeTextTr = "GEÇİCİ METİN: Yakalanan aktivistlere eklenen virüs, durdukları anda harekete geçiyor.",
             doubleJump = true, phase = true, parry = true,
+            endDialogue = EndDialogueDataPath, keepDialogueTestTrigger = true,
             build = BuildLevel2
         },
         new LevelDef
@@ -60,6 +69,7 @@ public static class PrototypeLevelsBuilder
             displayNameTr = "Kule", belgeTitleTr = "Belge 3: Kule",
             belgeTextTr = "GEÇİCİ METİN: Dokümanların son parçası şirketin kulesinde saklanıyor.",
             doubleJump = true, phase = true, parry = true, hook = true, jetBag = true, magBoots = true,
+            endDialogue = EndDialogueDataPath, keepDialogueTestTrigger = true,
             build = BuildLevel3
         }
     };
@@ -107,9 +117,40 @@ public static class PrototypeLevelsBuilder
 
         // Bölüm arayüzü: LevelUI prefab'ı (yoksa önce üretilir); düzeni prefab'da düzenlenir, tüm bölümlere yansır
         U.AddLevelUI(scene);
+        AddEndDialogue(scene, def);
 
         U.SaveScene(scene, $"Assets/Scenes/{def.sceneName}.unity");
         return true;
+    }
+
+    // Bölüm sonu diyaloğu: C_Dialogue prefab'ı sahneye konur, LevelGoal'a diyalog verisi atanır
+    // (hedefe varınca önce diyalog oynar, bitince sonuç ekranı açılır; bkz. LevelGoal)
+    private static void AddEndDialogue(Scene scene, LevelDef def)
+    {
+        if (string.IsNullOrEmpty(def.endDialogue)) return;
+
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(DialoguePrefabPath);
+        var data = AssetDatabase.LoadAssetAtPath<DialogueData>(def.endDialogue);
+        if (prefab == null || data == null)
+        {
+            Debug.LogWarning($"[KosKos] {def.sceneName}: diyalog prefab'ı ya da verisi bulunamadı ({DialoguePrefabPath}, {def.endDialogue}); bölüm diyalogsuz kuruldu.");
+            return;
+        }
+
+        var dialogue = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+        // T tuşuyla diyalog başlatan test tetikleyicisi (bölüm içinde istenmiyorsa kaldırılır)
+        if (!def.keepDialogueTestTrigger)
+        {
+            foreach (DialogueTestTrigger trigger in dialogue.GetComponentsInChildren<DialogueTestTrigger>(true))
+            {
+                Object.DestroyImmediate(trigger);
+            }
+        }
+
+        LevelGoal goal = Object.FindFirstObjectByType<LevelGoal>();
+        var so = new SerializedObject(goal);
+        so.FindProperty("dialogueData").objectReferenceValue = data;
+        so.ApplyModifiedPropertiesWithoutUndo();
     }
 
     // --- Bölüm 1 "Kaçış": temel set (çift zıplama, sıyrılganlık, savuşturma yok) ---
