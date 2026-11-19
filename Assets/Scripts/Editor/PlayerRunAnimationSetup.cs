@@ -3,14 +3,23 @@ using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
-// DENEME: 2B koşu animasyonunu oyuncuya bağlar: KosKos > Animation > Setup Player Run Animation.
-// 1) Assets/Player/RunningAnimationTest içindeki kareleri sprite olarak içe aktarır (alt-orta pivot, ~2 birim boy).
-// 2) Kareleri sırayla (1, 2, ... 10) döngülü Run.anim'e koyar, PlayerRun.controller'a bağlar.
-// 3) Player.prefab'a "Visual" çocuğu (SpriteRenderer + Animator) ekler/günceller ve kapsülün MeshRenderer'ını gizler
-//    (çarpıştırıcı ve fizik aynen kalır). Kareler değişince tekrar çalıştırmak yeterli; her şeyi günceller.
+// DENEME: 2B koşu ve zıplama animasyonlarını oyuncuya bağlar: KosKos > Animation > Setup Player Run Animation.
+// 1) Assets/Player/RunningAnimationTest ve Assets/Player/jump try içindeki kareleri sprite olarak içe aktarır (alt-orta pivot, ~2 birim boy).
+// 2) Koşu karelerini sırayla (1, 2, ... 10) döngülü Run.anim'e koyar, PlayerRun.controller'a bağlar.
+// 3) Player.prefab'a "Visual" çocuğu (SpriteRenderer + Animator + PlayerSpriteAnimator) ekler/günceller ve kapsülün MeshRenderer'ını gizler
+//    (çarpıştırıcı ve fizik aynen kalır). Zıplama kareleri PlayerSpriteAnimator'a atanır: kalkış = koşu 3, yükseliş = 1-2, tepe = 3,
+//    geçiş = 4, düşüş = 5. Atılma kareleri (Assets/Player/dash try): geçiş = 1-3, tutulan kare = 4.
+//    Kareler kullanıcının verdiği gibidir; hiçbir kare eklenmez / çoğaltılmaz.
+//    Kareler değişince tekrar çalıştırmak yeterli; her şeyi günceller.
 public static class PlayerRunAnimationSetup
 {
     private const string FrameFolder = "Assets/Player/RunningAnimationTest";
+    private const string JumpFolder = "Assets/Player/jump try";
+    private const int JumpFrameCount = 5;
+    private const string DashFolder = "Assets/Player/dash try";
+    private const int DashFrameCount = 4;
+    // Zıplamaya geçiş karesi: koşunun 3. karesi
+    private const int TakeoffRunFrame = 3;
     private const string ClipPath = FrameFolder + "/Run.anim";
     private const string ControllerPath = FrameFolder + "/PlayerRun.controller";
     private const string PlayerPrefabPath = "Assets/Prefabs/Player.prefab";
@@ -27,24 +36,44 @@ public static class PlayerRunAnimationSetup
     [MenuItem("KosKos/Animation/Setup Player Run Animation")]
     private static void Setup()
     {
-        Sprite[] frames = ImportFrames();
+        Sprite[] frames = ImportFrames(FrameFolder);
         if (frames.Length == 0)
         {
             EditorUtility.DisplayDialog("Koşu animasyonu", $"{FrameFolder} içinde kare (PNG) bulunamadı.", "Tamam");
             return;
         }
 
+        // Zıplama: klasör yoksa ya da kare sayısı beklenenden farklıysa atlanır (karakter havada da koşu döngüsünü oynatır)
+        Sprite[] jumpFrames = AssetDatabase.IsValidFolder(JumpFolder) ? ImportFrames(JumpFolder) : new Sprite[0];
+        if (jumpFrames.Length != JumpFrameCount)
+        {
+            Debug.LogWarning($"[KosKos] Zıplama atlandı: {JumpFolder} içinde {JumpFrameCount} kare bekleniyordu, {jumpFrames.Length} bulundu.");
+            jumpFrames = null;
+        }
+        Sprite takeoff = frames.Length >= TakeoffRunFrame ? frames[TakeoffRunFrame - 1] : null;
+
+        // Atılma: klasör yoksa ya da kare sayısı farklıysa atlanır (atılmada koşu / havadaki kareler görünür)
+        Sprite[] dashFrames = AssetDatabase.IsValidFolder(DashFolder) ? ImportFrames(DashFolder) : new Sprite[0];
+        if (dashFrames.Length != DashFrameCount)
+        {
+            Debug.LogWarning($"[KosKos] Atılma atlandı: {DashFolder} içinde {DashFrameCount} kare bekleniyordu, {dashFrames.Length} bulundu.");
+            dashFrames = null;
+        }
+
         AnimationClip clip = CreateOrUpdateClip(frames);
         AnimatorController controller = GetOrCreateController(clip);
-        SetupPlayerPrefab(frames[0], controller);
+        SetupPlayerPrefab(frames[0], controller, takeoff, jumpFrames, dashFrames);
         AssetDatabase.SaveAssets();
-        Debug.Log($"[KosKos] Koşu animasyonu oyuncuya bağlandı: {frames.Length} kare, {FramesPerSecond} fps.");
+        Debug.Log($"[KosKos] Koşu animasyonu oyuncuya bağlandı: {frames.Length} kare, {FramesPerSecond} fps." +
+            (jumpFrames != null ? $" Zıplama: koşu {TakeoffRunFrame} + {jumpFrames.Length} kare." : "") +
+            (jumpFrames != null && dashFrames != null ? $" Atılma: {dashFrames.Length} kare." : ""));
     }
 
-    // Kareleri sprite olarak ayarlar ve sayı sırasına göre döndürür (1, 2, ..., 10; "10" "2"den sonra gelsin diye sayıyla sıralanır)
-    private static Sprite[] ImportFrames()
+    // Kareleri sprite olarak ayarlar ve dosya adının sonundaki sayıya göre sıralı döndürür
+    // ("JUMP 1", "jump 4", "10" gibi; "10" "2"den sonra gelsin diye sayıyla sıralanır)
+    private static Sprite[] ImportFrames(string folder)
     {
-        string[] paths = AssetDatabase.FindAssets("t:Texture2D", new[] { FrameFolder })
+        string[] paths = AssetDatabase.FindAssets("t:Texture2D", new[] { folder })
             .Select(AssetDatabase.GUIDToAssetPath)
             .OrderBy(FrameNumber)
             .ToArray();
@@ -76,7 +105,8 @@ public static class PlayerRunAnimationSetup
     private static int FrameNumber(string path)
     {
         string name = System.IO.Path.GetFileNameWithoutExtension(path);
-        return int.TryParse(name, out int number) ? number : int.MaxValue;
+        System.Text.RegularExpressions.Match m = System.Text.RegularExpressions.Regex.Match(name, @"(\d+)\s*$");
+        return m.Success && int.TryParse(m.Groups[1].Value, out int number) ? number : int.MaxValue;
     }
 
     private static AnimationClip CreateOrUpdateClip(Sprite[] frames)
@@ -115,7 +145,7 @@ public static class PlayerRunAnimationSetup
         return controller;
     }
 
-    private static void SetupPlayerPrefab(Sprite firstFrame, AnimatorController controller)
+    private static void SetupPlayerPrefab(Sprite firstFrame, AnimatorController controller, Sprite takeoff, Sprite[] jumpFrames, Sprite[] dashFrames)
     {
         GameObject root = PrefabUtility.LoadPrefabContents(PlayerPrefabPath);
         try
@@ -142,6 +172,36 @@ public static class PlayerRunAnimationSetup
             if (animator == null) animator = visual.gameObject.AddComponent<Animator>();
             animator.runtimeAnimatorController = controller;
             animator.applyRootMotion = false;
+
+            // Havadaki kareleri seçen bileşen; zıplama kareleri yoksa havada da koşu döngüsü oynar
+            var spriteAnimator = visual.GetComponent<PlayerSpriteAnimator>();
+            if (jumpFrames != null)
+            {
+                if (spriteAnimator == null) spriteAnimator = visual.gameObject.AddComponent<PlayerSpriteAnimator>();
+                var so = new SerializedObject(spriteAnimator);
+                so.FindProperty("takeoffFrame").objectReferenceValue = takeoff;
+                SerializedProperty rise = so.FindProperty("riseFrames");
+                rise.arraySize = 2;
+                rise.GetArrayElementAtIndex(0).objectReferenceValue = jumpFrames[0];
+                rise.GetArrayElementAtIndex(1).objectReferenceValue = jumpFrames[1];
+                so.FindProperty("peakFrame").objectReferenceValue = jumpFrames[2];
+                so.FindProperty("peakToFallFrame").objectReferenceValue = jumpFrames[3];
+                so.FindProperty("fallFrame").objectReferenceValue = jumpFrames[4];
+                // Atılma kareleri yoksa boş bırakılır: bileşen atılmada kare değiştirmez
+                SerializedProperty dashTransition = so.FindProperty("dashTransitionFrames");
+                dashTransition.arraySize = dashFrames != null ? DashFrameCount - 1 : 0;
+                for (int i = 0; i < dashTransition.arraySize; i++)
+                {
+                    dashTransition.GetArrayElementAtIndex(i).objectReferenceValue = dashFrames[i];
+                }
+                so.FindProperty("dashHoldFrame").objectReferenceValue = dashFrames != null ? dashFrames[DashFrameCount - 1] : null;
+                so.FindProperty("runStateName").stringValue = controller.layers[0].stateMachine.defaultState.name;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
+            else if (spriteAnimator != null)
+            {
+                Object.DestroyImmediate(spriteAnimator);
+            }
 
             // Kapsül görünmez olur; çarpıştırıcısı ve tüm fizik aynen kalır
             var capsuleRenderer = root.GetComponent<MeshRenderer>();

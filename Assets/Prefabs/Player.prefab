@@ -481,6 +481,7 @@ GameObject:
   - component: {fileID: 3263691756404871128}
   - component: {fileID: 6063531918900932410}
   - component: {fileID: 312946000615410983}
+  - component: {fileID: 8991797900017919569}
   m_Layer: 8
   m_Name: Visual
   m_TagString: Untagged
@@ -584,6 +585,40 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &8991797900017919569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3379323010804760856}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 58e8b8845ce8afa43b4fcacbf7d79fe3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpriteAnimator
+  takeoffFrame: {fileID: 21300000, guid: 076bae8b50ab7da48b39d22b52d117cc, type: 3}
+  riseFrames:
+  - {fileID: 21300000, guid: 038247002655fa647b85e7054e06fa56, type: 3}
+  - {fileID: 21300000, guid: b179a5232eb40ff479fe8104246955d5, type: 3}
+  peakFrame: {fileID: 21300000, guid: d87584110a55cc74c80595a5d2e48901, type: 3}
+  peakToFallFrame: {fileID: 21300000, guid: 3bf995948ffd00945b88c2298c12d86a, type: 3}
+  fallFrame: {fileID: 21300000, guid: 75fe4d24c8b60464d99f228bba9f0afe, type: 3}
+  dashTransitionFrames:
+  - {fileID: 21300000, guid: ec0cea75de22d024a97bb8d8a9cd6757, type: 3}
+  - {fileID: 21300000, guid: be9e309e461dd3b44b089762092573e0, type: 3}
+  - {fileID: 21300000, guid: 3a86b6ff7e797a349b8367b2328495f8, type: 3}
+  dashHoldFrame: {fileID: 21300000, guid: a9e4d90b41a6d4f448f32e5590acd939, type: 3}
+  dashTransitionFrameTime: 0.027777778
+  dashHoldAfterTime: 0.1
+  takeoffTime: 0.083333336
+  riseFrameTime: 0.083333336
+  peakSpeed: 2.5
+  peakToFallTime: 0.083333336
+  runStateName: Run
+  matchRunSpeed: 1
+  minRunAnimSpeed: 0.5
+  maxRunAnimSpeed: 2.5
 --- !u!1 &4579269664522394192
 GameObject:
   m_ObjectHideFlags: 0
@@ -1544,9 +1579,6 @@ MonoBehaviour:
     m_Bits: 1024
   phaseVisualHold: 0.15
   dodgeGraceTime: 0.2
-  dashTiltAngle: -17
-  dashTiltTime: 0.05
-  tiltReturnTime: 0.2
 --- !u!114 &467729156314950423
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -28,16 +28,6 @@ public class DashAbility : MonoBehaviour
     [Tooltip("Atılma bittikten sonra mermilerden kaçış korumasının (sıyrılganlıkla içinden geçme) devam ettiği ek süre (sn). Toplam koruma = atılma süresi + bu süre (0.2 + 0.2 = 0.4).")]
     [SerializeField] private float dodgeGraceTime = 0.2f;
 
-    [Header("Eğilme")]
-    [Tooltip("Atılma sırasında karakterin Z ekseninde döndüğü açı (derece).")]
-    [SerializeField] private float dashTiltAngle = -17f;
-
-    [Tooltip("Atılma başında düz duruştan atılma açısına geçiş süresi (sn).")]
-    [SerializeField] private float dashTiltTime = 0.05f;
-
-    [Tooltip("Atılma bitince karakterin düz duruşa dönme süresi (sn).")]
-    [SerializeField] private float tiltReturnTime = 0.2f;
-
     public bool IsDashing { get; private set; }
     public float DashSpeed => dashSpeed;
     public float DashDuration => dashDuration;
@@ -66,13 +56,6 @@ public class DashAbility : MonoBehaviour
     private float phaseVisualUntil = float.NegativeInfinity;
     // Zipline'dan düşünce yere inene kadar atılma yok
     private bool blockedUntilLanded;
-
-    // Eğilme görseli: atılma başlangıcı, dönüş başlangıcı ve dönüşe başlarken açı
-    private float dashStartTime;
-    private bool tiltReturning;
-    private float tiltReturnStartTime;
-    private float tiltReturnFrom;
-    private float currentTilt;
 
     private void Awake()
     {
@@ -115,8 +98,8 @@ public class DashAbility : MonoBehaviour
         IsDashing = true;
         // Fizik zamanına göre ölçülür; FixedUpdate'teki kontrol ile aynı saat kullanılsın diye
         dashEndTime = Time.fixedTime + dashDuration;
-        dashStartTime = Time.time;
-        tiltReturning = false;
+        // Atılma pozu çizimde zaten öne eğik: karakter düz durur (kancadan kalan eğim de sıfırlanır, kanca atılmada eğimi bırakır)
+        motor.SetTiltZ(0f);
 
         isPhasing = PhaseUnlocked;
         if (isPhasing) motor.SetExcludedLayers(phaseableLayers);
@@ -154,45 +137,6 @@ public class DashAbility : MonoBehaviour
             isPhasing = false;
         }
         motor.ReleaseControl(this);
-
-        // Görsel: bulunulan açıdan düz duruşa yavaşça dönülür
-        tiltReturning = true;
-        tiltReturnStartTime = Time.time;
-        tiltReturnFrom = currentTilt;
-    }
-
-    // Eğilme görseli: atılma başında dashTiltAngle'a döner; atılma bitince düze döner
-    private void Update()
-    {
-        float tilt;
-        if (IsDashing)
-        {
-            tilt = Mathf.Lerp(0f, dashTiltAngle, (Time.time - dashStartTime) / dashTiltTime);
-        }
-        else if (tiltReturning)
-        {
-            float t = (Time.time - tiltReturnStartTime) / tiltReturnTime;
-            tilt = Mathf.Lerp(tiltReturnFrom, 0f, t);
-            if (t >= 1f) tiltReturning = false;
-        }
-        else
-        {
-            return;
-        }
-        SetTilt(tilt);
-    }
-
-    private void SetTilt(float degrees)
-    {
-        currentTilt = degrees;
-        motor.SetTiltZ(degrees);
-    }
-
-    // Ölüm/yeniden doğuşta karakter anında düz durur
-    private void ResetTilt()
-    {
-        tiltReturning = false;
-        SetTilt(0f);
     }
 
     // Duvarın ya da düşman mermisinin içinden geçildi: karakter kısa süre yarı saydam görünür (mermiler de çağırır)
@@ -223,7 +167,6 @@ public class DashAbility : MonoBehaviour
     {
         // Atılma sırasında ölürsek kilit takılı kalmasın
         if (IsDashing) EndDash();
-        ResetTilt();
         // Ölümde ek koruma süresi ve saydamlık taşınmaz
         dodgeGraceEndTime = float.NegativeInfinity;
         phaseVisualUntil = float.NegativeInfinity;
@@ -235,6 +178,5 @@ public class DashAbility : MonoBehaviour
         lastDashTime = float.NegativeInfinity;
         dodgeGraceEndTime = float.NegativeInfinity;
         blockedUntilLanded = false;
-        ResetTilt();
     }
 }

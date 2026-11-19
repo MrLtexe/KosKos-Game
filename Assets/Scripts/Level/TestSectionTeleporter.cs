@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 // TEST: test dünyasında her sistemi tek başına tekrar tekrar denemek için alan seçme.
 // Oyuncu bekleme alanında (hub) hareketsiz ve kontrolsüz başlar. Hub'da her alan için sahnede küçük bir küp buton durur:
-// fareyle üstüne gelince sararır, tıklayınca o alanın başına ışınlar. 1-9 ve 0 (10.) tuşları da aynı işi yapar,
+// fareyle üstüne gelince sararır, tıklayınca o alanın başına ışınlar. 1-9, 0 (10.) ve - (11.) tuşları da aynı işi yapar,
 // R bulunulan alanı baştan alır, H hub'a döner. Alanlar sahnedeki güvenli alanlardır (aşağıdan yukarı, sonra soldan sağa sıralı).
 // Ölünce de seçilen alanın başında doğulur. Sağ üstte alan tuşları ve oyun tuşları (güncel atamalarıyla) gösterilir.
 // Sadece test dünyasına konur (KosKos > Scenes > Build Test World ekler); prototip bölümlerde yoktur.
@@ -38,11 +38,11 @@ public class TestSectionTeleporter : MonoBehaviour
     [Tooltip("Küp sıraları arası dikey mesafe (birim).")]
     [SerializeField] private float cubeSpacingY = 2.8f;
 
-    // Bir sıradaki küp sayısı (10 alan = 2 sıra)
-    private const int CubesPerRow = 5;
+    // Bir sıradaki küp sayısı (11 alan = 2 sıra; 3. sıra hub zemininin altına düşerdi)
+    private const int CubesPerRow = 6;
 
-    // 1-9 ve 0 tuşları
-    private const int MaxSections = 10;
+    // 1-9, 0 ve - tuşları
+    private const int MaxSections = 11;
     private const string SafeZonePrefix = "SafeZone_";
 
     private readonly List<SafeZone> sections = new List<SafeZone>();
@@ -87,7 +87,7 @@ public class TestSectionTeleporter : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             int index = i;
-            AddKey($"Section{i + 1}", $"<Keyboard>/{KeyLabel(i)}", () => TeleportTo(index));
+            AddKey($"Section{i + 1}", $"<Keyboard>/{KeyPath(i)}", () => TeleportTo(index));
         }
         AddKey("RestartSection", "<Keyboard>/r", Restart);
         if (hub != null)
@@ -324,8 +324,11 @@ public class TestSectionTeleporter : MonoBehaviour
         keyListText.text = builder.ToString().TrimEnd();
     }
 
-    // Sıra -> tuş: 0..8 -> "1".."9", 9 -> "0"
-    private static string KeyLabel(int index) => index < 9 ? (index + 1).ToString() : "0";
+    // Sıra -> tuş: 0..8 -> "1".."9", 9 -> "0", 10 -> "-"
+    private static string KeyLabel(int index) => index < 9 ? (index + 1).ToString() : index == 9 ? "0" : "-";
+
+    // Input System'deki tuş adı (eksi tuşunun adı "minus")
+    private static string KeyPath(int index) => index == 10 ? "minus" : KeyLabel(index);
 
     // "SafeZone_Pull" -> "Pull"; başlangıç alanı "Start"
     private static string SectionName(SafeZone zone)

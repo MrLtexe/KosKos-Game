@@ -11,7 +11,7 @@ using DT = SectionDTraversalTestSceneBuilder;
 // Tek tıkla tüm sistemleri tek sahnede toplayan test dünyasını üretir: KosKos > Scenes > Build Test World.
 // Oyuncu bir bekleme alanında (hub) hareketsiz başlar. Her sistemin ayrı bir alanı vardır; alanlar üst üste,
 // birbirinden uzakta durur (biri diğerinden görünmez). Her alanın başında bir güvenli alan, altında kendi ölüm alanı vardır:
-// 1-9 ve 0 tuşları o alana ışınlar, R bulunulan alanı baştan alır, H hub'a döner (TestSectionTeleporter).
+// 1-9, 0 ve - tuşları o alana ışınlar, R bulunulan alanı baştan alır, H hub'a döner (TestSectionTeleporter).
 // Alanın sonundan düşünce ölünür ve aynı alanın başında doğulur, böylece alan kendiliğinden tekrar eder.
 // Sahne her seferinde yeniden oluşturulur; elle düzenlemeyin. Tüm yetenekler açıktır (test loadout'u).
 public static class TestWorldBuilder
@@ -32,7 +32,7 @@ public static class TestWorldBuilder
 
         Transform level = new GameObject("Level").transform;
 
-        // Sıra = tuş: 1..9, 0
+        // Sıra = tuş: 1..9, 0, -
         (string name, AreaBuilder build)[] areas =
         {
             ("Movement", BuildMovement),
@@ -44,7 +44,8 @@ public static class TestWorldBuilder
             ("LaunchPad", BuildLaunchPad),
             ("Zipline", BuildZipline),
             ("Sling", BuildSling),
-            ("Bubble", BuildBubble)
+            ("Bubble", BuildBubble),
+            ("LongRun", BuildLongRun)
         };
 
         // Bekleme alanı (hub): küçük platform; oyuncu burada hareketsiz başlar ve alan seçer
@@ -71,6 +72,13 @@ public static class TestWorldBuilder
         new GameObject("TestSectionTeleporter").AddComponent<TestSectionTeleporter>();
 
         U.SaveScene(scene, ScenePath);
+    }
+
+    // 11. Uzun koşu: üstünde hiçbir şey olmayan uzun düz zemin (koşu / zıplama animasyonunu ve hareketi rahatça izlemek için).
+    // Alanın ölüm alanı -100..300'ü kaplar; zemin bu aralıkta biter, sonundan düşen oyuncu alanın başında doğar
+    private static void BuildLongRun(Transform a, U.Layers l)
+    {
+        U.Ground(a, l.Ground, "LongGround", -5f, 290f);
     }
 
     // 1. Hareket: alçak duvar, boşluk, çift zıplama duvarı, atılma boşluğu, yükseltilmiş platform, alçak tavan, sıyrılganlık duvarı
