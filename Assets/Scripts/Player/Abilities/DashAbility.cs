@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
 
 // Atılma (B.3): karakter kısa süre yerçekimsiz, düz bir çizgide ileri fırlar.
@@ -27,6 +28,13 @@ public class DashAbility : MonoBehaviour
     [Header("Mermiden Kaçış")]
     [Tooltip("Atılma bittikten sonra mermilerden kaçış korumasının (sıyrılganlıkla içinden geçme) devam ettiği ek süre (sn). Toplam koruma = atılma süresi + bu süre (0.2 + 0.2 = 0.4).")]
     [SerializeField] private float dodgeGraceTime = 0.2f;
+
+    [Header("Ses Efekti")]
+    [Tooltip("Atılma ses efekti.")]
+    [SerializeField] private AudioClip[] dashSound;
+
+    [Tooltip("Ses efektini çalacak AudioSource (boş bırakılırsa bu objedeki AudioSource kullanılır).")]
+    [SerializeField] private AudioSource playerAudioSource;
 
     public bool IsDashing { get; private set; }
     public float DashSpeed => dashSpeed;
@@ -62,6 +70,7 @@ public class DashAbility : MonoBehaviour
         motor = GetComponent<PlayerMotor>();
         input = GetComponent<PlayerInputReader>();
         death = GetComponent<PlayerDeath>();
+        if (playerAudioSource == null) playerAudioSource = GetComponent<AudioSource>();
     }
 
     private void OnEnable()
@@ -103,6 +112,13 @@ public class DashAbility : MonoBehaviour
 
         isPhasing = PhaseUnlocked;
         if (isPhasing) motor.SetExcludedLayers(phaseableLayers);
+
+        // Atılma ses efekti
+        if (dashSound != null && playerAudioSource != null)
+        {
+            playerAudioSource.PlayOneShot(dashSound[0]);
+            playerAudioSource.PlayOneShot(dashSound[1]);
+        }
 
         motor.SetVelocity(new Vector3(dashSpeed, 0f, 0f));
     }
