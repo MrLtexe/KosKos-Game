@@ -43,3 +43,11 @@ MonoBehaviour:
     belgeTitleTr: 'Belge 3: Kule'
     belgeTextTr: "GE\xC7\u0130C\u0130 MET\u0130N: Dok\xFCmanlar\u0131n son par\xE7as\u0131
       \u015Firketin kulesinde saklan\u0131yor."
+  - id: L4
+    displayName: Tutorial
+    sceneName: Level_04
+    belgeTitle: Tutorial
+    belgeText: abc
+    displayNameTr: Tutorial
+    belgeTitleTr: Tutorial
+    belgeTextTr: abc
