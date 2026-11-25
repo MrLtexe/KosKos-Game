@@ -1515,7 +1515,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c60ccf296986f546834f51121e02820, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMotor
-  runSpeed: 8
+  runSpeed: 6
   airDeceleration: 1.5
   minAirSpeed: 5
   boostDecayRate: 8
@@ -1601,10 +1601,11 @@ MonoBehaviour:
   hitLayers:
     serializedVersion: 2
     m_Bits: 3639
-  swingShakeStrength: 0.12
-  swingShakeDuration: 0.06
+  swingPunch: {x: 0.08, y: -0.04, z: 0}
+  swingPunchDuration: 0.09
   hitShakeStrength: 0.5
   hitShakeDuration: 0.2
+  hitShakeVibrato: 18
   hitStopDuration: 0.1
   hitboxVisual: {fileID: 2763350813586597441}
   slashRadius: 1.7
