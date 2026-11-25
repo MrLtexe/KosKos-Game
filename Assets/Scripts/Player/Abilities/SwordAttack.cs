@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 // Kılıç (B.5): ileri doğru, üstü ve altı da kapsayan kısa bir vuruş.
@@ -27,6 +29,25 @@ public class SwordAttack : MonoBehaviour
 
     [Tooltip("Kılıcın vurabileceği layer'lar. Player layer'ı dahil edilmemeli.")]
     [SerializeField] private LayerMask hitLayers = ~0;
+
+    [Header("Vuruş Hissiyatı (Game Feel - DOTween)")]
+    [Tooltip("Kılıcı boşa salladığında kameranın alacağı yönlü darbe vektörü (X=ileri, Y=yukarı).")]
+    [SerializeField] private Vector3 swingPunch = new Vector3(0.08f, -0.04f, 0f);
+
+    [Tooltip("Kılıcı boşa salladığında darbenin sönümlenme süresi (sn).")]
+    [SerializeField] private float swingPunchDuration = 0.09f;
+
+    [Tooltip("Hedefe (düşman, mermi vs.) vurduğunda kameranın DOTween sarsıntı gücü.")]
+    [SerializeField] private float hitShakeStrength = 0.28f;
+
+    [Tooltip("Hedefe vurduğunda sarsıntı süresi (sn).")]
+    [SerializeField] private float hitShakeDuration = 0.14f;
+
+    [Tooltip("Hedefe vurduğunda kameradaki sarsıntı sıklığı (vibrato - ne kadar tok titrer).")]
+    [SerializeField] private int hitShakeVibrato = 18;
+
+    [Tooltip("Hedefe vurduğunda oyunun anlık donma (hit stop) süresi (sn). 1-2 kare için ~0.035 - 0.05 sn.")]
+    [SerializeField] private float hitStopDuration = 0.045f;
 
     [Header("Geçici Görsel")]
     [Tooltip("GEÇİCİ: vuruş görseli. Oyunda bunun üstünde hilal şeklinde beyaz bir kılıç izi çizilir. Animasyon gelince kaldırılacak. Boş bırakılabilir.")]
@@ -76,6 +97,7 @@ public class SwordAttack : MonoBehaviour
 
     private float attackStartTime = float.NegativeInfinity;
     private bool dashRefreshedThisSwing;
+    private Coroutine hitStopCoroutine;
 
     // Kılıç izi: her karede yeniden çizilen hilal ağı ve görünmeye başladığı an
     private Mesh slashMesh;
@@ -99,6 +121,11 @@ public class SwordAttack : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (hitStopCoroutine != null)
+        {
+            StopCoroutine(hitStopCoroutine);
+            Time.timeScale = 1f;
+        }
         if (slashMesh != null) Destroy(slashMesh);
         if (slashMaterial != null) Destroy(slashMaterial);
     }
@@ -196,6 +223,12 @@ public class SwordAttack : MonoBehaviour
         hitThisSwing.Clear();
         dashRefreshedThisSwing = false;
         SetVisual(true);
+
+        // Boşa savurma hissiyatı: kamerada yönlü bir vuruş / darbe (DOPunch)
+        if (CameraFollow.Instance != null && swingPunch.sqrMagnitude > 0f)
+        {
+            CameraFollow.Instance.DoPunch(swingPunch, swingPunchDuration, 5, 0.4f);
+        }
     }
 
     private void FixedUpdate()
@@ -230,6 +263,20 @@ public class SwordAttack : MonoBehaviour
             hitThisSwing.Add(hittable);
             bool counted = hittable.OnSwordHit(this);
 
+            if (counted)
+            {
+                // İsabet hissiyatı: DOTween ile sönümlenen tok kamera sarsıntısı ve hit stop (donma)
+                if (CameraFollow.Instance != null && hitShakeStrength > 0f)
+                {
+                    CameraFollow.Instance.DoShake(hitShakeDuration, hitShakeStrength, hitShakeVibrato, 90f);
+                }
+
+                if (hitStopDuration > 0f)
+                {
+                    TriggerHitStop(hitStopDuration);
+                }
+            }
+
             // Havada gerçek bir isabet atılmayı yeniler (vuruş başına bir kez yeterli)
             if (counted && !motor.IsGrounded && !dashRefreshedThisSwing)
             {
@@ -259,9 +306,38 @@ public class SwordAttack : MonoBehaviour
         IsAttacking = false;
     }
 
+    private void TriggerHitStop(float duration)
+    {
+        if (hitStopCoroutine != null) StopCoroutine(hitStopCoroutine);
+        hitStopCoroutine = StartCoroutine(HitStopRoutine(duration));
+    }
+
+    private IEnumerator HitStopRoutine(float duration)
+    {
+        // Menü duraklatması veya diyalog açıksa (timeScale zaten 0 ise) donma rutini karıştırmasın
+        if (Time.timeScale <= 0f) yield break;
+
+        float prevScale = Time.timeScale;
+        Time.timeScale = 0f;
+        yield return new WaitForSecondsRealtime(duration);
+
+        // Eğer arayüz/menü duraklatması gelmediyse önceki hıza döndür
+        if (Mathf.Approximately(Time.timeScale, 0f))
+        {
+            Time.timeScale = prevScale;
+        }
+        hitStopCoroutine = null;
+    }
+
     // Ölümde iz anında kaybolur
     private void OnDied()
     {
+        if (hitStopCoroutine != null)
+        {
+            StopCoroutine(hitStopCoroutine);
+            Time.timeScale = 1f;
+            hitStopCoroutine = null;
+        }
         EndAttack();
         SetVisual(false);
     }

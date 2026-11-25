@@ -1,8 +1,11 @@
+using DG.Tweening;
 using UnityEngine;
 
 // Basit takip kamerası: X'te oyuncuya kilitli (oyuncu solda kalır, ileri görülür), Y'de yumuşak takip.
 public class CameraFollow : MonoBehaviour
 {
+    public static CameraFollow Instance { get; private set; }
+
     [Tooltip("Takip edilecek oyuncu.")]
     [SerializeField] private Transform target;
 
@@ -64,12 +67,23 @@ public class CameraFollow : MonoBehaviour
     private float shakeDuration;
     private float shakeEndTime;
 
+    // DOTween tabanlı sarsıntı ve darbe (Punch) ofseti
+    private Vector3 dotweenOffset = Vector3.zero;
+    private Tweener dotweenTween;
+
     private void Awake()
     {
+        Instance = this;
         targetDeath = target.GetComponent<PlayerDeath>();
         targetBoost = target.GetComponent<BoostChargeAbility>();
         targetMotor = target.GetComponent<PlayerMotor>();
         targetDash = target.GetComponent<DashAbility>();
+    }
+
+    private void OnDestroy()
+    {
+        if (dotweenTween != null && dotweenTween.IsActive()) dotweenTween.Kill();
+        if (Instance == this) Instance = null;
     }
 
     private void OnEnable()
@@ -104,7 +118,7 @@ public class CameraFollow : MonoBehaviour
 
         Vector3 goal = target.position + offset + chargeShift + new Vector3(dashShift, 0f, 0f);
         followY = Mathf.SmoothDamp(followY, goal.y, ref verticalVelocity, verticalSmoothTime);
-        transform.position = new Vector3(goal.x, followY, goal.z) + ShakeOffset();
+        transform.position = new Vector3(goal.x, followY, goal.z) + ShakeOffset() + dotweenOffset;
     }
 
     // Yeniden doğuşta kamera kaymadan direkt oyuncuya atlar
@@ -114,6 +128,8 @@ public class CameraFollow : MonoBehaviour
         followY = transform.position.y;
         verticalVelocity = 0f;
         shakeEndTime = 0f;
+        if (dotweenTween != null && dotweenTween.IsActive()) dotweenTween.Kill();
+        dotweenOffset = Vector3.zero;
         chargeShift = Vector3.zero;
         chargeRightVelocity = 0f;
         chargeZoomVelocity = 0f;
@@ -149,6 +165,46 @@ public class CameraFollow : MonoBehaviour
         // Bırakıldıktan sonraki en yüksek boost'u başlangıç say; uzaklaşma ona oranla azalır
         heldBoost = Mathf.Max(heldBoost, boost);
         return new Vector3(0f, 0f, -heldZoomOut * boost / heldBoost);
+    }
+
+    // DOTween tabanlı yönlü darbe etkisi (boşa savurma, zıplama darbesi vb.)
+    public void DoPunch(Vector3 punchDirection, float duration = 0.08f, int vibrato = 4, float elasticity = 0.5f)
+    {
+        if (dotweenTween != null && dotweenTween.IsActive()) dotweenTween.Kill();
+        dotweenOffset = Vector3.zero;
+
+        dotweenTween = DOTween.Punch(
+            () => dotweenOffset,
+            x => dotweenOffset = x,
+            punchDirection,
+            duration,
+            vibrato,
+            elasticity
+        ).SetUpdate(true);
+    }
+
+    // DOTween tabanlı sönümlenen kaliteli sarsıntı etkisi (hedefe vurma, patlama vb.)
+    public void DoShake(float duration = 0.12f, float strength = 0.25f, int vibrato = 14, float randomness = 90f)
+    {
+        if (dotweenTween != null && dotweenTween.IsActive()) dotweenTween.Kill();
+        dotweenOffset = Vector3.zero;
+
+        dotweenTween = DOTween.Shake(
+            () => dotweenOffset,
+            x => dotweenOffset = x,
+            duration,
+            new Vector3(strength, strength * 0.7f, 0f),
+            vibrato,
+            randomness,
+            true, // fadeOut
+            ShakeRandomnessMode.Full
+        ).SetUpdate(true);
+    }
+
+    // Dışarıdan tetiklenebilen genel kamera sarsıntısı (geriye uyumluluk için korundu)
+    public void Shake(float strength, float duration)
+    {
+        DoShake(duration, strength);
     }
 
     // Yeni şarj adımı: adım numarasına göre sallanma (0 = şarj başladı/bitti, sallanma yok)

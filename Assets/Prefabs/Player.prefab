@@ -1579,6 +1579,8 @@ MonoBehaviour:
     m_Bits: 1024
   phaseVisualHold: 0.15
   dodgeGraceTime: 0.2
+  dashSound: []
+  playerAudioSource: {fileID: 0}
 --- !u!114 &467729156314950423
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1599,6 +1601,11 @@ MonoBehaviour:
   hitLayers:
     serializedVersion: 2
     m_Bits: 3639
+  swingShakeStrength: 0.12
+  swingShakeDuration: 0.06
+  hitShakeStrength: 0.5
+  hitShakeDuration: 0.2
+  hitStopDuration: 0.1
   hitboxVisual: {fileID: 2763350813586597441}
   slashRadius: 1.7
   slashThickness: 0.5
